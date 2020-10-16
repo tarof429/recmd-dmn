@@ -472,14 +472,36 @@ func RunShellScriptCommand(sc *ScheduledCommand, c chan int) {
 	c <- sc.ExitStatus
 }
 
-// CmdHandler handles a request for http://localhost:8090/cmd/<hash>
-func CmdHandler(w http.ResponseWriter, r *http.Request) {
+// listHandler lists commands
+func listHandler(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	ret, err := ReadCmdHistoryFile()
+
+	if err != nil {
+		log.Println("Unable to read history file")
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	out, err := json.Marshal(ret)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	io.WriteString(w, string(out))
+}
+
+// cmdHandler runs a command
+func cmdHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
 	// Get the requested command hash
 	vars := mux.Vars(r)
-	cmdHash := vars["hash"]
+	cmdHash := vars["cmdHash"]
 	secret := vars["secret"]
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
@@ -625,9 +647,10 @@ func initTool() {
 func main() {
 	initTool()
 	r := mux.NewRouter()
-	r.HandleFunc("/secret/{secret}/hash/{hash}", CmdHandler)
+	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", cmdHandler)
+	r.HandleFunc("/secret/{secret}/list", listHandler)
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(":8090", nil))
+	log.Fatal(http.ListenAndServe(":8999", nil))
 
 	// // Maybe the following should be written as a test!
 	// cmdHash := "37fa265330ad83eaa879efb1e2db63"
