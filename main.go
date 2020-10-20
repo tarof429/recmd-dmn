@@ -506,6 +506,44 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
+// searchHandler selects a command
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	// Get the requested command hash
+	vars := mux.Vars(r)
+	description := vars["description"]
+	secret := vars["secret"]
+
+	// Check if the secret we passed in is valid, otherwise, return error 400
+	if secret != GetSecret() {
+		log.Println("Bad secret!")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Select the command, otherwise, if the command hash cannot be found, return error 400
+	selectedCmds, cerr := SearchCmd(description)
+
+	if cerr != nil {
+		log.Println("Unable to select command")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	out, err := json.Marshal(selectedCmds)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	io.WriteString(w, string(out))
+}
+
 // selectHandler selects a command
 func selectHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -704,6 +742,7 @@ func main() {
 	InitTool()
 	r := mux.NewRouter()
 	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", selectHandler)
+	r.HandleFunc("/secret/{secret}/search/description/{description}", searchHandler)
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", cmdHandler)
 	r.HandleFunc("/secret/{secret}/list", listHandler)
 	http.Handle("/", r)
