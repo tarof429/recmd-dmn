@@ -601,8 +601,8 @@ func GetSecret() string {
 	return string(secretData)
 }
 
-// Initialize the tool
-func initTool() {
+// InitTool initializes the tool
+func InitTool() {
 
 	// Create ~/.recmd if it doesn't exist
 	homeDir, err := os.UserHomeDir()
@@ -645,7 +645,7 @@ func initTool() {
 }
 
 func main() {
-	initTool()
+	InitTool()
 	r := mux.NewRouter()
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", cmdHandler)
 	r.HandleFunc("/secret/{secret}/list", listHandler)
