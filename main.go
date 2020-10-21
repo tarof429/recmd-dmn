@@ -588,6 +588,36 @@ func selectHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
+// deleteHandler deletess a command
+func deleteHandler(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	// Get the requested command hash
+	vars := mux.Vars(r)
+	cmdHash := vars["cmdHash"]
+	secret := vars["secret"]
+
+	// Check if the secret we passed in is valid, otherwise, return error 400
+	if secret != GetSecret() {
+		log.Println("Bad secret!")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Select the command, otherwise, if the command hash cannot be found, return error 400
+	index := DeleteCmd(cmdHash)
+
+	out, err := json.Marshal(index)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	io.WriteString(w, string(out))
+}
+
 // cmdHandler runs a command
 func cmdHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -741,6 +771,7 @@ func InitTool() {
 func main() {
 	InitTool()
 	r := mux.NewRouter()
+	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", deleteHandler)
 	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", selectHandler)
 	r.HandleFunc("/secret/{secret}/search/description/{description}", searchHandler)
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", cmdHandler)
