@@ -654,8 +654,8 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
-// cmdHandler runs a command
-func cmdHandler(w http.ResponseWriter, r *http.Request) {
+// runHandler runs a command
+func runHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -688,7 +688,6 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Scheduling command")
 
-	// Schedule the command. This code may need to be cleaned up since we set the header twice.
 	sc := ScheduleCommand(selectedCmd, RunShellScriptCommand)
 
 	log.Println("Command completed")
@@ -790,6 +789,20 @@ func InitTool() {
 		log.Fatalf("Error, ~/.recmd is not a directory")
 	}
 
+	// Load the command history file path. We don't need to read it yet.
+	cmdHistoryFilePath = filepath.Join(recmdDirPath, recmdHistoryFile)
+
+	//recmdHistoryFile := filepath.Join(recmdDirPath, recmdHistoryFile)
+
+	_, statErr = os.Stat(cmdHistoryFilePath)
+
+	if os.IsNotExist(statErr) {
+		fmt.Println("Creating file")
+		CreateCmdHistoryFile()
+	} else {
+		fmt.Println("File exists")
+	}
+
 	// Create the secrets file. Will be recreated each time this
 	// function is called.
 	recmdSecretFilePath = filepath.Join(recmdDirPath, recmdSecretFile)
@@ -802,9 +815,6 @@ func InitTool() {
 		log.Fatalf("Error, unable to create secrets file %v\n", err)
 		return
 	}
-
-	// Load the command history file path. We don't need to read it yet.
-	cmdHistoryFilePath = filepath.Join(recmdDirPath, recmdHistoryFile)
 }
 
 func main() {
@@ -813,7 +823,7 @@ func main() {
 	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", deleteHandler)
 	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", selectHandler)
 	r.HandleFunc("/secret/{secret}/search/description/{description}", searchHandler)
-	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", cmdHandler)
+	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", runHandler)
 	r.HandleFunc("/secret/{secret}/list", listHandler)
 	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", addHandler)
 	http.Handle("/", r)
