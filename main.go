@@ -334,6 +334,14 @@ func WriteCmdHistoryFile(cmd Command) bool {
 		return false
 	}
 
+	// No data in file, write our command to it
+	if len(data) == 0 {
+		cmds = append(cmds, cmd)
+		updatedData, _ := json.MarshalIndent(cmds, "", "\t")
+		mode := int(0644)
+		error := ioutil.WriteFile(cmdHistoryFilePath, updatedData, os.FileMode(mode))
+		return error == nil
+	}
 	if err := json.Unmarshal(data, &cmds); err != nil {
 		fmt.Fprintf(os.Stderr, "JSON unmarshalling failed: %s\n", err)
 		return false
@@ -618,7 +626,6 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Returning true...")
 	w.WriteHeader(http.StatusOK)
 	out, _ := json.Marshal("true")
 	io.WriteString(w, string(out))
