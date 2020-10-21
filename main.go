@@ -588,6 +588,42 @@ func selectHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
+// addHandler adds a command
+func addHandler(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	// Get the requested command hash
+	vars := mux.Vars(r)
+	secret := vars["secret"]
+	command := vars["command"]
+	description := vars["description"]
+
+	// Check if the secret we passed in is valid, otherwise, return error 400
+	if secret != GetSecret() {
+		log.Println("Bad secret!")
+		w.WriteHeader(http.StatusBadRequest)
+		out, _ := json.Marshal("false")
+		io.WriteString(w, string(out))
+		return
+	}
+
+	// Select the command, otherwise, if the command hash cannot be found, return error 400
+	testCmd := NewCommand(command, description)
+
+	if WriteCmdHistoryFile(testCmd) != true {
+		w.WriteHeader(http.StatusBadRequest)
+		out, _ := json.Marshal("false")
+		io.WriteString(w, string(out))
+		return
+	}
+
+	log.Println("Returning true...")
+	w.WriteHeader(http.StatusOK)
+	out, _ := json.Marshal("true")
+	io.WriteString(w, string(out))
+}
+
 // deleteHandler deletess a command
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -779,6 +815,7 @@ func main() {
 	r.HandleFunc("/secret/{secret}/search/description/{description}", searchHandler)
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", cmdHandler)
 	r.HandleFunc("/secret/{secret}/list", listHandler)
+	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", addHandler)
 	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe(":8999", nil))
 
