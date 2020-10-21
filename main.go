@@ -655,6 +655,8 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 	// Schedule the command. This code may need to be cleaned up since we set the header twice.
 	sc := ScheduleCommand(selectedCmd, RunShellScriptCommand)
 
+	log.Println("Command completed")
+
 	if len(sc.Coutput) != 0 {
 		// fmt.Println(sc.Coutput)
 		w.WriteHeader(http.StatusOK)
@@ -673,6 +675,7 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 	if ret != true {
 		w.WriteHeader(http.StatusBadRequest)
 	}
+
 }
 
 // CreateSecret create a secret string. This must be passed to the service to call the method successfully.
