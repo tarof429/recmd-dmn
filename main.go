@@ -16,7 +16,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import (
-	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,7 +23,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -32,15 +30,6 @@ import (
 	"github.com/gorilla/mux"
 	dmn "github.com/tarof429/recmd-dmn/dmn"
 )
-
-// ScheduledCommand represents a dmn.Command that is scheduled to run
-type ScheduledCommand struct {
-	dmn.Command
-	Coutput    string    `json:"coutput"`
-	ExitStatus int       `json:"exitStatus"`
-	StartTime  time.Time `json:"startTime"`
-	EndTime    time.Time `json:"endTime"`
-}
 
 const (
 	// Port that this program listens to
@@ -371,29 +360,11 @@ func WriteCmdHistoryFile(cmd dmn.Command) bool {
 
 }
 
-// NewCommand creates a new dmn.Command struct and populates the fields
-func NewCommand(cmdString string, cmdComment string) dmn.Command {
-
-	formattedHash := func() string {
-		h := sha1.New()
-		h.Write([]byte(cmdString))
-		return fmt.Sprintf("%.15x", h.Sum(nil))
-	}()
-
-	cmd := dmn.Command{CmdHash: formattedHash,
-		CmdString:   strings.Trim(cmdString, ""),
-		Description: strings.Trim(cmdComment, ""),
-		Duration:    -1,
-	}
-
-	return cmd
-}
-
 // ScheduleCommand runs a dmn.Command based on a function passed in as the second parameter.
 // This gives the ability to run dmn.Commands in multiple ways; for example, as a "mock" dmn.Command
 // (RunMockdmn.Command) or a shell script dmn.Command (RunShellScriptdmn.Command).
-func ScheduleCommand(cmd dmn.Command, f func(*ScheduledCommand, chan int)) ScheduledCommand {
-	var sc ScheduledCommand
+func ScheduleCommand(cmd dmn.Command, f func(*dmn.ScheduledCommand, chan int)) dmn.ScheduledCommand {
+	var sc dmn.ScheduledCommand
 
 	sc.CmdHash = cmd.CmdHash
 	sc.CmdString = cmd.CmdString
@@ -426,56 +397,6 @@ func ScheduleCommand(cmd dmn.Command, f func(*ScheduledCommand, chan int)) Sched
 	}
 
 	return sc
-}
-
-// RunMockCommand runs a mock dmn.Command
-func RunMockCommand(sc *ScheduledCommand, c chan int) {
-	time.Sleep(1 * time.Second)
-	sc.ExitStatus = 99
-	sc.Coutput = "Mock stdout message"
-	c <- sc.ExitStatus
-}
-
-// RunShellScriptCommand runs a dmn.Command written to a temporary file
-func RunShellScriptCommand(sc *ScheduledCommand, c chan int) {
-
-	tempFile, err := ioutil.TempFile(os.TempDir(), "recmd-")
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: unable to create temp file: %d\n", err)
-	}
-
-	defer os.Remove(tempFile.Name())
-
-	_, err = tempFile.WriteString("#!/bin/sh\n\n" + sc.CmdString)
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Errror: unable to write script to temp file: : %s\n", err)
-	}
-
-	cmd := exec.Command("sh", tempFile.Name())
-
-	// We may want to make this configurable in the future.
-	// For now, all dmn.Commands will be run from the user's home directory
-	cmd.Dir, err = os.UserHomeDir()
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Unable to obtain home directory: %s\n", err)
-	}
-
-	//out, err := cmd.Output()
-
-	combinedOutput, combinedOutputErr := cmd.CombinedOutput()
-
-	// fmt.Fprintf(os.Stdout, "\nError: %s error 2: %v\n", string(combinedOutput), err2)
-
-	if combinedOutputErr != nil {
-		sc.ExitStatus = -1
-	}
-
-	sc.Coutput = string(combinedOutput)
-
-	c <- sc.ExitStatus
 }
 
 // listHandler lists dmn.Commands
@@ -544,7 +465,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	selectedCmds, cerr := SearchCmd(variables.Description)
 
 	if cerr != nil {
-		log.Println("Unable to select dmn.Command")
+		log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -587,7 +508,7 @@ func selectHandler(w http.ResponseWriter, r *http.Request) {
 	selectedCmd, cerr := SelectCmd(recmdDirPath, variables.CmdHash)
 
 	if cerr != nil {
-		log.Println("Unable to select dmn.Command")
+		log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -717,7 +638,7 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	selectedCmd, cerr := SelectCmd(recmdDirPath, variables.CmdHash)
 
 	if cerr != nil {
-		log.Println("Unable to select dmn.Command")
+		log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -728,11 +649,11 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Scheduling dmn.Command")
+	log.Println("Scheduling Command")
 
-	sc := ScheduleCommand(selectedCmd, RunShellScriptCommand)
+	sc := ScheduleCommand(selectedCmd, dmn.RunShellScriptCommand)
 
-	log.Println("dmn.Command completed")
+	log.Println("Command completed")
 
 	if len(sc.Coutput) != 0 {
 		// fmt.Println(sc.Coutput)
