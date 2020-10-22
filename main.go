@@ -17,7 +17,6 @@ limitations under the License.
 */
 import (
 	"crypto/sha1"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -32,6 +31,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	dmn "github.com/tarof429/recmd-dmn/dmn"
 )
 
 // Command represents a command and optionally a description to document what the command does
@@ -52,6 +52,9 @@ type ScheduledCommand struct {
 }
 
 const (
+	// Port that this program listens to
+	serverPort = ":8999"
+
 	// Directory containing configuration and command history
 	recmdDir = ".recmd"
 
@@ -494,11 +497,12 @@ func RunShellScriptCommand(sc *ScheduledCommand, c chan int) {
 // listHandler lists commands
 func listHandler(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type", "application/json")
-
-	// Get the requested command hash
+	// Get variables from the request
 	vars := mux.Vars(r)
-	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
+	var variables dmn.RequestVariable
+	err := variables.GetVariablesFromRequestVars(vars)
+
+	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -506,7 +510,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if string(secret) != GetSecret() {
+	if variables.Secret != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -533,19 +537,12 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 // searchHandler selects a command
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type", "application/json")
-
-	// Get the requested command hash
+	// Get variables from the request
 	vars := mux.Vars(r)
+	var variables dmn.RequestVariable
+	err := variables.GetVariablesFromRequestVars(vars)
 
-	description, err := base64.StdEncoding.DecodeString(vars["description"])
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
+	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -553,14 +550,14 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if string(secret) != GetSecret() {
+	if variables.Secret != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	selectedCmds, cerr := SearchCmd(string(description))
+	selectedCmds, cerr := SearchCmd(variables.Description)
 
 	if cerr != nil {
 		log.Println("Unable to select command")
@@ -583,19 +580,12 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 // selectHandler selects a command
 func selectHandler(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type", "application/json")
-
-	// Get the requested command hash
+	// Get variables from the request
 	vars := mux.Vars(r)
+	var variables dmn.RequestVariable
+	err := variables.GetVariablesFromRequestVars(vars)
 
-	cmdHash, err := base64.StdEncoding.DecodeString(vars["cmdHash"])
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
+	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -603,14 +593,14 @@ func selectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if string(secret) != GetSecret() {
+	if variables.Secret != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	selectedCmd, cerr := SelectCmd(recmdDirPath, string(cmdHash))
+	selectedCmd, cerr := SelectCmd(recmdDirPath, variables.CmdHash)
 
 	if cerr != nil {
 		log.Println("Unable to select command")
@@ -639,26 +629,12 @@ func selectHandler(w http.ResponseWriter, r *http.Request) {
 // addHandler adds a command
 func addHandler(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type", "application/json")
-
-	// Get the requested command hash
+	// Get variables from the request
 	vars := mux.Vars(r)
+	var variables dmn.RequestVariable
+	err := variables.GetVariablesFromRequestVars(vars)
 
-	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	command, err := base64.StdEncoding.DecodeString(vars["command"])
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	description, err := base64.StdEncoding.DecodeString(vars["description"])
+	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -666,7 +642,7 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if string(secret) != GetSecret() {
+	if variables.Secret != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		out, _ := json.Marshal("false")
@@ -675,7 +651,7 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	testCmd := NewCommand(string(command), string(description))
+	testCmd := NewCommand(variables.Command, variables.Description)
 
 	if WriteCmdHistoryFile(testCmd) != true {
 		w.WriteHeader(http.StatusBadRequest)
@@ -692,19 +668,12 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 // deleteHandler deletess a command
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type", "application/json")
-
-	// Get the requested command hash
+	// Get variables from the request
 	vars := mux.Vars(r)
+	var variables dmn.RequestVariable
+	err := variables.GetVariablesFromRequestVars(vars)
 
-	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	cmdHash, err := base64.StdEncoding.DecodeString(vars["cmdHash"])
+	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -712,14 +681,14 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if string(secret) != GetSecret() {
+	if variables.Secret != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	selectedCmd, err := DeleteCmd(string(cmdHash))
+	selectedCmd, err := DeleteCmd(variables.CmdHash)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -739,19 +708,12 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 // runHandler runs a command
 func runHandler(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type", "application/json")
-
-	// Get the requested command hash
+	// Get variables from the request
 	vars := mux.Vars(r)
+	var variables dmn.RequestVariable
+	err := variables.GetVariablesFromRequestVars(vars)
 
-	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	cmdHash, err := base64.StdEncoding.DecodeString(vars["cmdHash"])
+	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -759,14 +721,14 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if string(secret) != GetSecret() {
+	if variables.Secret != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	selectedCmd, cerr := SelectCmd(recmdDirPath, string(cmdHash))
+	selectedCmd, cerr := SelectCmd(recmdDirPath, variables.CmdHash)
 
 	if cerr != nil {
 		log.Println("Unable to select command")
@@ -910,46 +872,16 @@ func InitTool() {
 func main() {
 	InitTool()
 	r := mux.NewRouter()
+
 	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", deleteHandler)
 	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", selectHandler)
 	r.HandleFunc("/secret/{secret}/search/description/{description}", searchHandler)
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", runHandler)
 	r.HandleFunc("/secret/{secret}/list", listHandler)
 	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", addHandler)
+
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(":8999", nil))
 
-	// // Maybe the following should be written as a test!
-	// cmdHash := "37fa265330ad83eaa879efb1e2db63"
+	log.Fatal(http.ListenAndServe(serverPort, nil))
 
-	// selectedCmd, cerr := SelectCmd(recmdDirPath, cmdHash)
-
-	// if cerr != nil {
-	// 	fmt.Fprintf(os.Stderr, "Error: unable to read history file: %s\n", cerr)
-	// 	return
-	// }
-
-	// sc := ScheduleCommand(selectedCmd, RunShellScriptCommand)
-
-	// if len(sc.Coutput) != 0 {
-	// 	// fmt.Println(sc.Coutput)
-
-	// 	out, err := json.Marshal(sc)
-
-	// 	if err != nil {
-	// 		//w.WriteHeader(http.StatusBadRequest)
-	// 		return
-
-	// 	}
-	// 	fmt.Println(string(out))
-
-	// }
-
-	// ret := UpdateCommandDuration(selectedCmd, sc.Duration)
-
-	// if ret != true {
-	// 	//w.WriteHeader(http.StatusBadRequest)
-	// 	fmt.Fprintf(os.Stderr, "Error while updating command")
-	// 	os.Exit(1)
-	// }
 }
