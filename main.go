@@ -17,6 +17,7 @@ limitations under the License.
 */
 import (
 	"crypto/sha1"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -106,6 +107,8 @@ func ReadCmdHistoryFile() ([]Command, error) {
 // SelectCmd returns a command
 func SelectCmd(dir string, value string) (Command, error) {
 
+	log.Println("Selecting " + value)
+
 	cmds, error := ReadCmdHistoryFile()
 
 	if error != nil {
@@ -124,6 +127,8 @@ func SelectCmd(dir string, value string) (Command, error) {
 
 // SearchCmd returns a command by name
 func SearchCmd(value string) ([]Command, error) {
+
+	log.Println("Searching " + value)
 
 	cmds, error := ReadCmdHistoryFile()
 
@@ -149,6 +154,8 @@ func SearchCmd(value string) ([]Command, error) {
 // DeleteCmd deletes a command. It's best to pass in the commandHash
 // because commands may look similar.
 func DeleteCmd(value string) int {
+
+	log.Println("Deleting " + value)
 
 	cmds, error := ReadCmdHistoryFile()
 
@@ -487,10 +494,15 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the requested command hash
 	vars := mux.Vars(r)
-	secret := vars["secret"]
+	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if secret != GetSecret() {
+	if string(secret) != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -521,18 +533,30 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the requested command hash
 	vars := mux.Vars(r)
-	description := vars["description"]
-	secret := vars["secret"]
+
+	description, err := base64.StdEncoding.DecodeString(vars["description"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if secret != GetSecret() {
+	if string(secret) != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	selectedCmds, cerr := SearchCmd(description)
+	selectedCmds, cerr := SearchCmd(string(description))
 
 	if cerr != nil {
 		log.Println("Unable to select command")
@@ -559,18 +583,30 @@ func selectHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the requested command hash
 	vars := mux.Vars(r)
-	cmdHash := vars["cmdHash"]
-	secret := vars["secret"]
+
+	cmdHash, err := base64.StdEncoding.DecodeString(vars["cmdHash"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if secret != GetSecret() {
+	if string(secret) != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	selectedCmd, cerr := SelectCmd(recmdDirPath, cmdHash)
+	selectedCmd, cerr := SelectCmd(recmdDirPath, string(cmdHash))
 
 	if cerr != nil {
 		log.Println("Unable to select command")
@@ -603,12 +639,30 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the requested command hash
 	vars := mux.Vars(r)
-	secret := vars["secret"]
-	command := vars["command"]
-	description := vars["description"]
+
+	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	command, err := base64.StdEncoding.DecodeString(vars["command"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	description, err := base64.StdEncoding.DecodeString(vars["description"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if secret != GetSecret() {
+	if string(secret) != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		out, _ := json.Marshal("false")
@@ -617,7 +671,7 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	testCmd := NewCommand(command, description)
+	testCmd := NewCommand(string(command), string(description))
 
 	if WriteCmdHistoryFile(testCmd) != true {
 		w.WriteHeader(http.StatusBadRequest)
@@ -638,18 +692,30 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the requested command hash
 	vars := mux.Vars(r)
-	cmdHash := vars["cmdHash"]
-	secret := vars["secret"]
+
+	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	cmdHash, err := base64.StdEncoding.DecodeString(vars["cmdHash"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if secret != GetSecret() {
+	if string(secret) != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	index := DeleteCmd(cmdHash)
+	index := DeleteCmd(string(cmdHash))
 
 	out, err := json.Marshal(index)
 
@@ -668,18 +734,30 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the requested command hash
 	vars := mux.Vars(r)
-	cmdHash := vars["cmdHash"]
-	secret := vars["secret"]
+
+	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	cmdHash, err := base64.StdEncoding.DecodeString(vars["cmdHash"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if secret != GetSecret() {
+	if string(secret) != GetSecret() {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	selectedCmd, cerr := SelectCmd(recmdDirPath, cmdHash)
+	selectedCmd, cerr := SelectCmd(recmdDirPath, string(cmdHash))
 
 	if cerr != nil {
 		log.Println("Unable to select command")
@@ -804,12 +882,8 @@ func InitTool() {
 	_, statErr = os.Stat(cmdHistoryFilePath)
 
 	if os.IsNotExist(statErr) {
-		fmt.Println("Creating file")
 		CreateCmdHistoryFile()
-	} else {
-		fmt.Println("File exists")
 	}
-
 	// Create the secrets file. Will be recreated each time this
 	// function is called.
 	recmdSecretFilePath = filepath.Join(recmdDirPath, recmdSecretFile)
