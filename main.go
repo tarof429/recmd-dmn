@@ -33,17 +33,9 @@ import (
 	dmn "github.com/tarof429/recmd-dmn/dmn"
 )
 
-// Command represents a command and optionally a description to document what the command does
-type Command struct {
-	CmdHash     string        `json:"commandHash"`
-	CmdString   string        `json:"commandString"`
-	Description string        `json:"description"`
-	Duration    time.Duration `json:"duration"`
-}
-
-// ScheduledCommand represents a command that is scheduled to run
+// ScheduledCommand represents a dmn.Command that is scheduled to run
 type ScheduledCommand struct {
-	Command
+	dmn.Command
 	Coutput    string    `json:"coutput"`
 	ExitStatus int       `json:"exitStatus"`
 	StartTime  time.Time `json:"startTime"`
@@ -54,10 +46,10 @@ const (
 	// Port that this program listens to
 	serverPort = ":8999"
 
-	// Directory containing configuration and command history
+	// Directory containing configuration and dmn.Command history
 	recmdDir = ".recmd"
 
-	// The command history file
+	// The dmn.Command history file
 	recmdHistoryFile = "recmd_history.json"
 )
 
@@ -70,13 +62,13 @@ var (
 	secret              *dmn.Secret
 )
 
-// ReadCmdHistoryFile reads historyFile and generates a list of Command structs
-func ReadCmdHistoryFile() ([]Command, error) {
+// ReadCmdHistoryFile reads historyFile and generates a list of dmn.Command structs
+func ReadCmdHistoryFile() ([]dmn.Command, error) {
 
 	var (
-		historyData []byte    // Data representing our history file
-		cmds        []Command // List of commands produced after unmarshalling historyData
-		err         error     // Any errors we might encounter
+		historyData []byte        // Data representing our history file
+		cmds        []dmn.Command // List of dmn.Commands produced after unmarshalling historyData
+		err         error         // Any errors we might encounter
 	)
 
 	// Read the history file into historyData
@@ -87,7 +79,7 @@ func ReadCmdHistoryFile() ([]Command, error) {
 		return cmds, err
 	}
 
-	// Unmarshall historyData into a list of commands
+	// Unmarshall historyData into a list of dmn.Commands
 	err = json.Unmarshal(historyData, &cmds)
 
 	if err != nil {
@@ -98,15 +90,15 @@ func ReadCmdHistoryFile() ([]Command, error) {
 
 }
 
-// SelectCmd returns a command
-func SelectCmd(dir string, value string) (Command, error) {
+// SelectCmd returns a dmn.Command
+func SelectCmd(dir string, value string) (dmn.Command, error) {
 
 	log.Println("Selecting " + value)
 
 	cmds, error := ReadCmdHistoryFile()
 
 	if error != nil {
-		return Command{}, error
+		return dmn.Command{}, error
 	}
 
 	for _, cmd := range cmds {
@@ -116,20 +108,20 @@ func SelectCmd(dir string, value string) (Command, error) {
 		}
 	}
 
-	return Command{}, nil
+	return dmn.Command{}, nil
 }
 
-// SearchCmd returns a command by name
-func SearchCmd(value string) ([]Command, error) {
+// SearchCmd returns a dmn.Command by name
+func SearchCmd(value string) ([]dmn.Command, error) {
 
 	log.Println("Searching " + value)
 
 	cmds, error := ReadCmdHistoryFile()
 
-	ret := []Command{}
+	ret := []dmn.Command{}
 
 	if error != nil {
-		return []Command{}, error
+		return []dmn.Command{}, error
 	}
 
 	for _, cmd := range cmds {
@@ -145,13 +137,13 @@ func SearchCmd(value string) ([]Command, error) {
 	return ret, nil
 }
 
-// DeleteCmd deletes a command. It's best to pass in the commandHash
-// because commands may look similar.
-func DeleteCmd(value string) ([]Command, error) {
+// DeleteCmd deletes a dmn.Command. It's best to pass in the dmn.CommandHash
+// because dmn.Commands may look similar.
+func DeleteCmd(value string) ([]dmn.Command, error) {
 
 	log.Println("Deleting " + value)
 
-	ret := []Command{}
+	ret := []dmn.Command{}
 
 	cmds, error := ReadCmdHistoryFile()
 
@@ -171,7 +163,7 @@ func DeleteCmd(value string) ([]Command, error) {
 	if foundIndex != -1 {
 		ret = append(ret, cmds[foundIndex])
 
-		//fmt.Println("Found command. Found index was " + strconv.Itoa(foundIndex))
+		//fmt.Println("Found dmn.Command. Found index was " + strconv.Itoa(foundIndex))
 		// We may want to do more investigation to know why this works...
 		cmds = append(cmds[:foundIndex], cmds[foundIndex+1:]...)
 
@@ -182,8 +174,8 @@ func DeleteCmd(value string) ([]Command, error) {
 	return ret, nil
 }
 
-// OverwriteCmdHistoryFile overwrites the history file with []Command passed in as a parameter
-func OverwriteCmdHistoryFile(cmds []Command) bool {
+// OverwriteCmdHistoryFile overwrites the history file with []dmn.Command passed in as a parameter
+func OverwriteCmdHistoryFile(cmds []dmn.Command) bool {
 
 	mode := int(0644)
 
@@ -197,7 +189,7 @@ func OverwriteCmdHistoryFile(cmds []Command) bool {
 // CreateCmdHistoryFile creates an empty history file
 func CreateCmdHistoryFile() bool {
 
-	// Check if the file does not exist. If not, then create it and add our first command to it.
+	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
 	f, err := os.Open(cmdHistoryFilePath)
 
 	// Immediately close the file since we plan to write to it
@@ -215,10 +207,10 @@ func CreateCmdHistoryFile() bool {
 	return true
 }
 
-// UpdateCommandDuration updates a command with the same hash in the history file
-func UpdateCommandDuration(cmd Command, duration time.Duration) bool {
+// UpdateCommandDuration updates a dmn.Command with the same hash in the history file
+func UpdateCommandDuration(cmd dmn.Command, duration time.Duration) bool {
 
-	// Check if the file does not exist. If not, then create it and add our first command to it.
+	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
 	f, err := os.Open(cmdHistoryFilePath)
 
 	// Immediately close the file since we plan to write to it
@@ -227,8 +219,8 @@ func UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 	// Check if the file doesn't exist and if so, then write it.
 	if err != nil {
 
-		// The array of commands
-		var cmds []Command
+		// The array of dmn.Commands
+		var cmds []dmn.Command
 
 		// Set the duration
 		cmd.Duration = duration
@@ -244,10 +236,10 @@ func UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 		return error == nil
 	}
 
-	// Update the command in the history file
+	// Update the dmn.Command in the history file
 
-	// The array of commands
-	var cmds []Command
+	// The array of dmn.Commands
+	var cmds []dmn.Command
 
 	// Read history file
 	data, err := ioutil.ReadFile(cmdHistoryFilePath)
@@ -268,14 +260,14 @@ func UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 	var found bool
 	var foundIndex int
 
-	// Update the duration for the command
+	// Update the duration for the dmn.Command
 	for index, c := range cmds {
 		if c.CmdHash == cmd.CmdHash {
-			//fmt.Println("Found command")
+			//fmt.Println("Found dmn.Command")
 			foundIndex = index
 			found = true
 			//c.Duration = cmd.Duration
-			//fmt.Fprintf(os.Stderr, "Command hash already exists: %s\n", cmd.CmdString)
+			//fmt.Fprintf(os.Stderr, "dmn.Command hash already exists: %s\n", cmd.CmdString)
 			break
 			//return false
 		}
@@ -300,10 +292,10 @@ func UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 	return error == nil
 }
 
-// WriteCmdHistoryFile writes a command to the history file
-func WriteCmdHistoryFile(cmd Command) bool {
+// WriteCmdHistoryFile writes a dmn.Command to the history file
+func WriteCmdHistoryFile(cmd dmn.Command) bool {
 
-	// Check if the file does not exist. If not, then create it and add our first command to it.
+	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
 	f, err := os.Open(cmdHistoryFilePath)
 
 	// Immediately close the file since we plan to write to it
@@ -311,8 +303,8 @@ func WriteCmdHistoryFile(cmd Command) bool {
 
 	// Check if the file doesn't exist and if so, then write it.
 	if err != nil {
-		// The array of commands
-		var cmds []Command
+		// The array of dmn.Commands
+		var cmds []dmn.Command
 
 		cmds = append(cmds, cmd)
 
@@ -325,10 +317,10 @@ func WriteCmdHistoryFile(cmd Command) bool {
 		return error == nil
 	}
 
-	// Update the command in the history file
+	// Update the dmn.Command in the history file
 
-	// The array of commands
-	var cmds []Command
+	// The array of dmn.Commands
+	var cmds []dmn.Command
 
 	// Read history file
 	data, err := ioutil.ReadFile(cmdHistoryFilePath)
@@ -339,7 +331,7 @@ func WriteCmdHistoryFile(cmd Command) bool {
 		return false
 	}
 
-	// No data in file, write our command to it
+	// No data in file, write our dmn.Command to it
 	if len(data) == 0 {
 		cmds = append(cmds, cmd)
 		updatedData, _ := json.MarshalIndent(cmds, "", "\t")
@@ -352,11 +344,11 @@ func WriteCmdHistoryFile(cmd Command) bool {
 		return false
 	}
 
-	// Check if the command hash alaready exists, and prevent the user from adding the same command
+	// Check if the dmn.Command hash alaready exists, and prevent the user from adding the same dmn.Command
 	for _, c := range cmds {
 		if c.CmdHash == cmd.CmdHash {
 			// c.Duration = cmd.Duration
-			fmt.Fprintf(os.Stderr, "Command hash already exists: %s\n", cmd.CmdString)
+			fmt.Fprintf(os.Stderr, "dmn.Command hash already exists: %s\n", cmd.CmdString)
 			//break
 			return false
 		}
@@ -379,8 +371,8 @@ func WriteCmdHistoryFile(cmd Command) bool {
 
 }
 
-// NewCommand creates a new Command struct and populates the fields
-func NewCommand(cmdString string, cmdComment string) Command {
+// NewCommand creates a new dmn.Command struct and populates the fields
+func NewCommand(cmdString string, cmdComment string) dmn.Command {
 
 	formattedHash := func() string {
 		h := sha1.New()
@@ -388,18 +380,19 @@ func NewCommand(cmdString string, cmdComment string) Command {
 		return fmt.Sprintf("%.15x", h.Sum(nil))
 	}()
 
-	cmd := Command{formattedHash,
-		strings.Trim(cmdString, ""),
-		strings.Trim(cmdComment, ""),
-		-1}
+	cmd := dmn.Command{CmdHash: formattedHash,
+		CmdString:   strings.Trim(cmdString, ""),
+		Description: strings.Trim(cmdComment, ""),
+		Duration:    -1,
+	}
 
 	return cmd
 }
 
-// ScheduleCommand runs a Command based on a function passed in as the second parameter.
-// This gives the ability to run Commands in multiple ways; for example, as a "mock" command
-// (RunMockCommand) or a shell script command (RunShellScriptCommand).
-func ScheduleCommand(cmd Command, f func(*ScheduledCommand, chan int)) ScheduledCommand {
+// ScheduleCommand runs a dmn.Command based on a function passed in as the second parameter.
+// This gives the ability to run dmn.Commands in multiple ways; for example, as a "mock" dmn.Command
+// (RunMockdmn.Command) or a shell script dmn.Command (RunShellScriptdmn.Command).
+func ScheduleCommand(cmd dmn.Command, f func(*ScheduledCommand, chan int)) ScheduledCommand {
 	var sc ScheduledCommand
 
 	sc.CmdHash = cmd.CmdHash
@@ -413,10 +406,10 @@ func ScheduleCommand(cmd Command, f func(*ScheduledCommand, chan int)) Scheduled
 	// Set the start time
 	sc.StartTime = time.Now()
 
-	// Run the command in a goroutine
+	// Run the dmn.Command in a goroutine
 	go f(&sc, c)
 
-	// Receive the exit status of the command
+	// Receive the exit status of the dmn.Command
 	status := <-c
 
 	now := time.Now()
@@ -429,13 +422,13 @@ func ScheduleCommand(cmd Command, f func(*ScheduledCommand, chan int)) Scheduled
 
 	// The main reason why this code exists is to use the value received from the channel.
 	if status != 0 {
-		fmt.Fprintf(os.Stderr, "\nError: command failed.\n")
+		fmt.Fprintf(os.Stderr, "\nError: dmn.Command failed.\n")
 	}
 
 	return sc
 }
 
-// RunMockCommand runs a mock command
+// RunMockCommand runs a mock dmn.Command
 func RunMockCommand(sc *ScheduledCommand, c chan int) {
 	time.Sleep(1 * time.Second)
 	sc.ExitStatus = 99
@@ -443,7 +436,7 @@ func RunMockCommand(sc *ScheduledCommand, c chan int) {
 	c <- sc.ExitStatus
 }
 
-// RunShellScriptCommand runs a command written to a temporary file
+// RunShellScriptCommand runs a dmn.Command written to a temporary file
 func RunShellScriptCommand(sc *ScheduledCommand, c chan int) {
 
 	tempFile, err := ioutil.TempFile(os.TempDir(), "recmd-")
@@ -463,7 +456,7 @@ func RunShellScriptCommand(sc *ScheduledCommand, c chan int) {
 	cmd := exec.Command("sh", tempFile.Name())
 
 	// We may want to make this configurable in the future.
-	// For now, all commands will be run from the user's home directory
+	// For now, all dmn.Commands will be run from the user's home directory
 	cmd.Dir, err = os.UserHomeDir()
 
 	if err != nil {
@@ -485,7 +478,7 @@ func RunShellScriptCommand(sc *ScheduledCommand, c chan int) {
 	c <- sc.ExitStatus
 }
 
-// listHandler lists commands
+// listHandler lists dmn.Commands
 func listHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
@@ -525,7 +518,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
-// searchHandler selects a command
+// searchHandler selects a dmn.Command
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
@@ -547,11 +540,11 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Select the command, otherwise, if the command hash cannot be found, return error 400
+	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
 	selectedCmds, cerr := SearchCmd(variables.Description)
 
 	if cerr != nil {
-		log.Println("Unable to select command")
+		log.Println("Unable to select dmn.Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -568,7 +561,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
-// selectHandler selects a command
+// selectHandler selects a dmn.Command
 func selectHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
@@ -590,11 +583,11 @@ func selectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Select the command, otherwise, if the command hash cannot be found, return error 400
+	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
 	selectedCmd, cerr := SelectCmd(recmdDirPath, variables.CmdHash)
 
 	if cerr != nil {
-		log.Println("Unable to select command")
+		log.Println("Unable to select dmn.Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -617,7 +610,7 @@ func selectHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
-// addHandler adds a command
+// addHandler adds a dmn.Command
 func addHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
@@ -641,10 +634,12 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	testCmd := NewCommand(variables.Command, variables.Description)
+	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
+	testCmd := new(dmn.Command)
+	testCmd.Set(variables.Command, variables.Description)
+	//testCmd := Newdmn.Command(variables.dmn.Command, variables.Description)
 
-	if WriteCmdHistoryFile(testCmd) != true {
+	if WriteCmdHistoryFile(*testCmd) != true {
 		w.WriteHeader(http.StatusBadRequest)
 		out, _ := json.Marshal("false")
 		io.WriteString(w, string(out))
@@ -656,7 +651,7 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
-// deleteHandler deletess a command
+// deleteHandler deletess a dmn.Command
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
@@ -678,7 +673,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Select the command, otherwise, if the command hash cannot be found, return error 400
+	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
 	selectedCmd, err := DeleteCmd(variables.CmdHash)
 
 	if err != nil {
@@ -696,7 +691,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
-// runHandler runs a command
+// runHandler runs a dmn.Command
 func runHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
@@ -718,11 +713,11 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Select the command, otherwise, if the command hash cannot be found, return error 400
+	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
 	selectedCmd, cerr := SelectCmd(recmdDirPath, variables.CmdHash)
 
 	if cerr != nil {
-		log.Println("Unable to select command")
+		log.Println("Unable to select dmn.Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -733,11 +728,11 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Scheduling command")
+	log.Println("Scheduling dmn.Command")
 
 	sc := ScheduleCommand(selectedCmd, RunShellScriptCommand)
 
-	log.Println("Command completed")
+	log.Println("dmn.Command completed")
 
 	if len(sc.Coutput) != 0 {
 		// fmt.Println(sc.Coutput)
@@ -786,7 +781,7 @@ func InitTool() {
 		log.Fatalf("Error, ~/.recmd is not a directory")
 	}
 
-	// Load the command history file path. We don't need to read it yet.
+	// Load the dmn.Command history file path. We don't need to read it yet.
 	cmdHistoryFilePath = filepath.Join(recmdDirPath, recmdHistoryFile)
 
 	//recmdHistoryFile := filepath.Join(recmdDirPath, recmdHistoryFile)
@@ -817,7 +812,7 @@ func main() {
 	r.HandleFunc("/secret/{secret}/search/description/{description}", searchHandler)
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", runHandler)
 	r.HandleFunc("/secret/{secret}/list", listHandler)
-	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", addHandler)
+	r.HandleFunc("/secret/{secret}/add/dmn.Command/{dmn.Command}/description/{description}", addHandler)
 
 	http.Handle("/", r)
 

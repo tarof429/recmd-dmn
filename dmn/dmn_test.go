@@ -65,3 +65,11 @@ func TestCreateSecret(t *testing.T) {
 	}
 
 }
+
+func TestCreateCommand(t *testing.T) {
+	cmd := new(Command)
+
+	cmd.Set("a", "b")
+
+	fmt.Println(cmd.CmdHash)
+}
