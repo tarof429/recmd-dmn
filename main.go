@@ -153,14 +153,16 @@ func SearchCmd(value string) ([]Command, error) {
 
 // DeleteCmd deletes a command. It's best to pass in the commandHash
 // because commands may look similar.
-func DeleteCmd(value string) int {
+func DeleteCmd(value string) ([]Command, error) {
 
 	log.Println("Deleting " + value)
+
+	ret := []Command{}
 
 	cmds, error := ReadCmdHistoryFile()
 
 	if error != nil {
-		return -1
+		return ret, error
 	}
 
 	foundIndex := -1
@@ -173,6 +175,8 @@ func DeleteCmd(value string) int {
 	}
 
 	if foundIndex != -1 {
+		ret = append(ret, cmds[foundIndex])
+
 		//fmt.Println("Found command. Found index was " + strconv.Itoa(foundIndex))
 		// We may want to do more investigation to know why this works...
 		cmds = append(cmds[:foundIndex], cmds[foundIndex+1:]...)
@@ -181,7 +185,7 @@ func DeleteCmd(value string) int {
 		OverwriteCmdHistoryFile(cmds)
 	}
 
-	return foundIndex
+	return ret, nil
 }
 
 // OverwriteCmdHistoryFile overwrites the history file with []Command passed in as a parameter
@@ -715,9 +719,14 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Select the command, otherwise, if the command hash cannot be found, return error 400
-	index := DeleteCmd(string(cmdHash))
+	selectedCmd, err := DeleteCmd(string(cmdHash))
 
-	out, err := json.Marshal(index)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	out, err := json.Marshal(selectedCmd)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
