@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	//dmn "github.com/tarof429/recmd-dmn/dmn"
 )
 
 const testdataDir = "testdata"
@@ -46,6 +47,21 @@ func TestGetVariablesFromRequestVars(t *testing.T) {
 
 	if description != variables.Description {
 		t.Error("Description did not match")
+	}
+}
+
+func TestCreateSecret(t *testing.T) {
+	secret := new(Secret)
+	secret.CreateSecret()
+	secret.SetPathToSecretsFile("./testdata")
+	err := secret.WriteSecretToFile()
+
+	if err != nil {
+		t.Error("Unable to write secret")
+	}
+
+	if "" == secret.GetSecret() {
+		t.Error("Invalid secret")
 	}
 
 }

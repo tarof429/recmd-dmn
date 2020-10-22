@@ -22,7 +22,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -58,17 +57,8 @@ const (
 	// Directory containing configuration and command history
 	recmdDir = ".recmd"
 
-	// The secret file
-	recmdSecretFile = "recmd_secret"
-
 	// The command history file
 	recmdHistoryFile = "recmd_history.json"
-
-	// List of characters in our secret
-	secretCharSet = "abcdedfghijklmnopqrstABCDEFGHIJKLMNOP123456789"
-
-	// Length of scret string
-	secretLength = 40
 )
 
 // Global variables
@@ -77,6 +67,7 @@ var (
 	recmdSecretFilePath string
 	secretData          string
 	cmdHistoryFilePath  string
+	secret              *dmn.Secret
 )
 
 // ReadCmdHistoryFile reads historyFile and generates a list of Command structs
@@ -510,7 +501,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if variables.Secret != GetSecret() {
+	if !secret.Valid(variables.Secret) {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -550,7 +541,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if variables.Secret != GetSecret() {
+	if !secret.Valid(variables.Secret) {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -593,7 +584,7 @@ func selectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if variables.Secret != GetSecret() {
+	if !secret.Valid(variables.Secret) {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -642,7 +633,7 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if variables.Secret != GetSecret() {
+	if !secret.Valid(variables.Secret) {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		out, _ := json.Marshal("false")
@@ -681,7 +672,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if variables.Secret != GetSecret() {
+	if !secret.Valid(variables.Secret) {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -721,7 +712,7 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if variables.Secret != GetSecret() {
+	if !secret.Valid(variables.Secret) {
 		log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -769,56 +760,6 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// CreateSecret create a secret string. This must be passed to the service to call the method successfully.
-func CreateSecret(charSet string) string {
-
-	rand.Seed(time.Now().Unix())
-
-	var s string
-
-	for i := 0; i < secretLength; i++ {
-		random := rand.Intn(len(charSet))
-		randomChar := charSet[random]
-		s += string(randomChar)
-	}
-	return s
-}
-
-// CreateSecretsFile creates the file containing the secret
-func CreateSecretsFile(secret string) error {
-
-	file, err := os.Create(recmdSecretFilePath)
-
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	_, err = io.WriteString(file, secret)
-
-	if err != nil {
-		return err
-	}
-
-	return file.Sync()
-}
-
-// GetSecret gets the secret from the file system
-func GetSecret() string {
-	secretData, err := ioutil.ReadFile(recmdSecretFilePath)
-
-	if err != nil {
-		log.Fatalf("Error, unable to read secret from file %v\n", err)
-	}
-
-	if len(secretData) != secretLength {
-		log.Fatalf("Error, invalid secret length %v\n", err)
-	}
-
-	return string(secretData)
-}
-
 // InitTool initializes the tool
 func InitTool() {
 
@@ -855,13 +796,11 @@ func InitTool() {
 	if os.IsNotExist(statErr) {
 		CreateCmdHistoryFile()
 	}
-	// Create the secrets file. Will be recreated each time this
-	// function is called.
-	recmdSecretFilePath = filepath.Join(recmdDirPath, recmdSecretFile)
-
-	secret := CreateSecret(secretCharSet)
-
-	err = CreateSecretsFile(secret)
+	// Create the secrets file containing the secret
+	secret = new(dmn.Secret)
+	secret.CreateSecret()
+	secret.SetPathToSecretsFile(recmdDirPath)
+	err = secret.WriteSecretToFile()
 
 	if err != nil {
 		log.Fatalf("Error, unable to create secrets file %v\n", err)

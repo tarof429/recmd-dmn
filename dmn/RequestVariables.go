@@ -2,6 +2,7 @@ package dmn
 
 import "encoding/base64"
 
+// RequestVariable represents variables passed into the request
 type RequestVariable struct {
 	Secret      string
 	Description string
@@ -9,6 +10,7 @@ type RequestVariable struct {
 	Command     string
 }
 
+// GetVariablesFromRequestVars gets variables from the request
 func (variables *RequestVariable) GetVariablesFromRequestVars(vars map[string]string) error {
 
 	secret, err := base64.StdEncoding.DecodeString(vars["secret"])
