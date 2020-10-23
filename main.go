@@ -50,27 +50,6 @@ var (
 	requestHandler dmn.RequestHandler
 )
 
-// SelectCmd returns a dmn.Command
-func SelectCmd(dir string, value string) (dmn.Command, error) {
-
-	log.Println("Selecting " + value)
-
-	cmds, error := history.ReadCmdHistoryFile()
-
-	if error != nil {
-		return dmn.Command{}, error
-	}
-
-	for _, cmd := range cmds {
-
-		if strings.Index(cmd.CmdHash, value) == 0 {
-			return cmd, nil
-		}
-	}
-
-	return dmn.Command{}, nil
-}
-
 // SearchCmd returns a dmn.Command by name
 func SearchCmd(value string) ([]dmn.Command, error) {
 
@@ -304,55 +283,6 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
-// selectHandler selects a dmn.Command
-func selectHandler(w http.ResponseWriter, r *http.Request) {
-
-	// Get variables from the request
-	vars := mux.Vars(r)
-	var variables dmn.RequestVariable
-	err := variables.GetVariablesFromRequestVars(vars)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !secret.Valid(variables.Secret) {
-		log.Println("Bad secret!")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
-	selectedCmd, cerr := SelectCmd(recmdDirPath, variables.CmdHash)
-
-	if cerr != nil {
-		log.Println("Unable to select Command")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if selectedCmd.CmdHash == "" {
-		log.Println("Invalid hash")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-
-	out, err := json.Marshal(selectedCmd)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	io.WriteString(w, string(out))
-}
-
 // runHandler runs a dmn.Command
 func runHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -376,7 +306,7 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
-	selectedCmd, cerr := SelectCmd(recmdDirPath, variables.CmdHash)
+	selectedCmd, cerr := requestHandler.SelectCmd(variables.CmdHash)
 
 	if cerr != nil {
 		log.Println("Unable to select Command")
@@ -476,8 +406,8 @@ func main() {
 
 	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", requestHandler.HandleDelete)
 	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", requestHandler.HandleAdd)
+	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", requestHandler.HandleSelect)
 
-	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", selectHandler)
 	r.HandleFunc("/secret/{secret}/search/description/{description}", searchHandler)
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", runHandler)
 	r.HandleFunc("/secret/{secret}/list", listHandler)
