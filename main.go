@@ -37,54 +37,24 @@ const (
 
 	// Directory containing configuration and dmn.Command history
 	recmdDir = ".recmd"
-
-	// The dmn.Command history file
-	recmdHistoryFile = "recmd_history.json"
 )
 
 // Global variables
 var (
-	recmdDirPath        string
-	recmdSecretFilePath string
-	secretData          string
-	cmdHistoryFilePath  string
-	secret              *dmn.Secret
+	recmdDirPath string
+	//recmdSecretFilePath string
+	secretData    string
+	secret        dmn.Secret
+	history       dmn.HistoryFile
+	deleteHandler dmn.DeleteHandler
 )
-
-// ReadCmdHistoryFile reads historyFile and generates a list of dmn.Command structs
-func ReadCmdHistoryFile() ([]dmn.Command, error) {
-
-	var (
-		historyData []byte        // Data representing our history file
-		cmds        []dmn.Command // List of dmn.Commands produced after unmarshalling historyData
-		err         error         // Any errors we might encounter
-	)
-
-	// Read the history file into historyData
-	historyData, err = ioutil.ReadFile(cmdHistoryFilePath)
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "An error occurred while reading historyfile: %v\n", err)
-		return cmds, err
-	}
-
-	// Unmarshall historyData into a list of dmn.Commands
-	err = json.Unmarshal(historyData, &cmds)
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error while unmarshalling: %v\n", err)
-	}
-
-	return cmds, err
-
-}
 
 // SelectCmd returns a dmn.Command
 func SelectCmd(dir string, value string) (dmn.Command, error) {
 
 	log.Println("Selecting " + value)
 
-	cmds, error := ReadCmdHistoryFile()
+	cmds, error := history.ReadCmdHistoryFile()
 
 	if error != nil {
 		return dmn.Command{}, error
@@ -105,7 +75,7 @@ func SearchCmd(value string) ([]dmn.Command, error) {
 
 	log.Println("Searching " + value)
 
-	cmds, error := ReadCmdHistoryFile()
+	cmds, error := history.ReadCmdHistoryFile()
 
 	ret := []dmn.Command{}
 
@@ -126,81 +96,11 @@ func SearchCmd(value string) ([]dmn.Command, error) {
 	return ret, nil
 }
 
-// DeleteCmd deletes a dmn.Command. It's best to pass in the dmn.CommandHash
-// because dmn.Commands may look similar.
-func DeleteCmd(value string) ([]dmn.Command, error) {
-
-	log.Println("Deleting " + value)
-
-	ret := []dmn.Command{}
-
-	cmds, error := ReadCmdHistoryFile()
-
-	if error != nil {
-		return ret, error
-	}
-
-	foundIndex := -1
-
-	for index, cmd := range cmds {
-		if strings.Index(cmd.CmdHash, value) == 0 {
-			foundIndex = index
-			break
-		}
-	}
-
-	if foundIndex != -1 {
-		ret = append(ret, cmds[foundIndex])
-
-		//fmt.Println("Found dmn.Command. Found index was " + strconv.Itoa(foundIndex))
-		// We may want to do more investigation to know why this works...
-		cmds = append(cmds[:foundIndex], cmds[foundIndex+1:]...)
-
-		// Return whether we are able to overwrite the history file
-		OverwriteCmdHistoryFile(cmds)
-	}
-
-	return ret, nil
-}
-
-// OverwriteCmdHistoryFile overwrites the history file with []dmn.Command passed in as a parameter
-func OverwriteCmdHistoryFile(cmds []dmn.Command) bool {
-
-	mode := int(0644)
-
-	updatedData, _ := json.MarshalIndent(cmds, "", "\t")
-
-	error := ioutil.WriteFile(cmdHistoryFilePath, updatedData, os.FileMode(mode))
-
-	return error == nil
-}
-
-// CreateCmdHistoryFile creates an empty history file
-func CreateCmdHistoryFile() bool {
-
-	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
-	f, err := os.Open(cmdHistoryFilePath)
-
-	// Immediately close the file since we plan to write to it
-	defer f.Close()
-
-	// Check if the file doesn't exist and if so, then write it.
-	if err != nil {
-
-		mode := int(0644)
-
-		error := ioutil.WriteFile(cmdHistoryFilePath, []byte(nil), os.FileMode(mode))
-
-		return error == nil
-	}
-	return true
-}
-
 // UpdateCommandDuration updates a dmn.Command with the same hash in the history file
 func UpdateCommandDuration(cmd dmn.Command, duration time.Duration) bool {
 
 	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
-	f, err := os.Open(cmdHistoryFilePath)
+	f, err := os.Open(history.Path)
 
 	// Immediately close the file since we plan to write to it
 	f.Close()
@@ -220,7 +120,7 @@ func UpdateCommandDuration(cmd dmn.Command, duration time.Duration) bool {
 
 		updatedData, _ := json.MarshalIndent(cmds, "", "\t")
 
-		error := ioutil.WriteFile(cmdHistoryFilePath, updatedData, os.FileMode(mode))
+		error := ioutil.WriteFile(history.Path, updatedData, os.FileMode(mode))
 
 		return error == nil
 	}
@@ -231,7 +131,7 @@ func UpdateCommandDuration(cmd dmn.Command, duration time.Duration) bool {
 	var cmds []dmn.Command
 
 	// Read history file
-	data, err := ioutil.ReadFile(cmdHistoryFilePath)
+	data, err := ioutil.ReadFile(history.Path)
 
 	// An error occured while reading historyFile.
 	if err != nil {
@@ -276,7 +176,7 @@ func UpdateCommandDuration(cmd dmn.Command, duration time.Duration) bool {
 
 	mode := int(0644)
 
-	error := ioutil.WriteFile(cmdHistoryFilePath, updatedData, os.FileMode(mode))
+	error := ioutil.WriteFile(history.Path, updatedData, os.FileMode(mode))
 
 	return error == nil
 }
@@ -285,7 +185,7 @@ func UpdateCommandDuration(cmd dmn.Command, duration time.Duration) bool {
 func WriteCmdHistoryFile(cmd dmn.Command) bool {
 
 	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
-	f, err := os.Open(cmdHistoryFilePath)
+	f, err := os.Open(history.Path)
 
 	// Immediately close the file since we plan to write to it
 	f.Close()
@@ -301,7 +201,7 @@ func WriteCmdHistoryFile(cmd dmn.Command) bool {
 
 		updatedData, _ := json.MarshalIndent(cmds, "", "\t")
 
-		error := ioutil.WriteFile(cmdHistoryFilePath, updatedData, os.FileMode(mode))
+		error := ioutil.WriteFile(history.Path, updatedData, os.FileMode(mode))
 
 		return error == nil
 	}
@@ -312,7 +212,7 @@ func WriteCmdHistoryFile(cmd dmn.Command) bool {
 	var cmds []dmn.Command
 
 	// Read history file
-	data, err := ioutil.ReadFile(cmdHistoryFilePath)
+	data, err := ioutil.ReadFile(history.Path)
 
 	// An error occured while reading historyFile.
 	if err != nil {
@@ -325,7 +225,7 @@ func WriteCmdHistoryFile(cmd dmn.Command) bool {
 		cmds = append(cmds, cmd)
 		updatedData, _ := json.MarshalIndent(cmds, "", "\t")
 		mode := int(0644)
-		error := ioutil.WriteFile(cmdHistoryFilePath, updatedData, os.FileMode(mode))
+		error := ioutil.WriteFile(history.Path, updatedData, os.FileMode(mode))
 		return error == nil
 	}
 	if err := json.Unmarshal(data, &cmds); err != nil {
@@ -354,7 +254,7 @@ func WriteCmdHistoryFile(cmd dmn.Command) bool {
 
 	mode := int(0644)
 
-	error := ioutil.WriteFile(cmdHistoryFilePath, updatedData, os.FileMode(mode))
+	error := ioutil.WriteFile(history.Path, updatedData, os.FileMode(mode))
 
 	return error == nil
 
@@ -421,7 +321,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ret, err := ReadCmdHistoryFile()
+	ret, err := history.ReadCmdHistoryFile()
 
 	if err != nil {
 		log.Println("Unable to read history file")
@@ -572,46 +472,6 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
-// deleteHandler deletess a dmn.Command
-func deleteHandler(w http.ResponseWriter, r *http.Request) {
-
-	// Get variables from the request
-	vars := mux.Vars(r)
-	var variables dmn.RequestVariable
-	err := variables.GetVariablesFromRequestVars(vars)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !secret.Valid(variables.Secret) {
-		log.Println("Bad secret!")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
-	selectedCmd, err := DeleteCmd(variables.CmdHash)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	out, err := json.Marshal(selectedCmd)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	io.WriteString(w, string(out))
-}
-
 // runHandler runs a dmn.Command
 func runHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -676,8 +536,8 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// InitTool initializes the tool
-func InitTool() {
+// initTool initializes the tool
+func initTool() {
 
 	// Create ~/.recmd if it doesn't exist
 	homeDir, err := os.UserHomeDir()
@@ -687,7 +547,6 @@ func InitTool() {
 	}
 
 	recmdDirPath = filepath.Join(homeDir, recmdDir)
-
 	fileInfo, statErr := os.Stat(recmdDirPath)
 
 	if os.IsNotExist((statErr)) {
@@ -702,38 +561,44 @@ func InitTool() {
 		log.Fatalf("Error, ~/.recmd is not a directory")
 	}
 
-	// Load the dmn.Command history file path. We don't need to read it yet.
-	cmdHistoryFilePath = filepath.Join(recmdDirPath, recmdHistoryFile)
-
-	//recmdHistoryFile := filepath.Join(recmdDirPath, recmdHistoryFile)
-
-	_, statErr = os.Stat(cmdHistoryFilePath)
-
-	if os.IsNotExist(statErr) {
-		CreateCmdHistoryFile()
-	}
-	// Create the secrets file containing the secret
-	secret = new(dmn.Secret)
-	secret.CreateSecret()
-	secret.SetPathToSecretsFile(recmdDirPath)
+	// Every time this program starts, create a new secret
+	secret.Set(recmdDirPath)
 	err = secret.WriteSecretToFile()
-
 	if err != nil {
 		log.Fatalf("Error, unable to create secrets file %v\n", err)
 		return
 	}
+	if secret.GetSecret() == "" {
+		log.Fatalf("Error, secret was an empty string")
+		return
+	}
+
+	// Load the history file. If it doesn't exist, create it.
+	history.Set(recmdDirPath)
+	_, statErr = os.Stat(history.Path)
+	if os.IsNotExist(statErr) {
+		err = history.WriteHistoryToFile()
+		if err != nil {
+			log.Fatalf("Error, unable to create history file")
+			return
+		}
+	}
+
 }
 
 func main() {
-	InitTool()
+	initTool()
+
 	r := mux.NewRouter()
 
-	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", deleteHandler)
+	deleteHandler.Set(secret, history)
+	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", deleteHandler.Handle)
+
 	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", selectHandler)
 	r.HandleFunc("/secret/{secret}/search/description/{description}", searchHandler)
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", runHandler)
 	r.HandleFunc("/secret/{secret}/list", listHandler)
-	r.HandleFunc("/secret/{secret}/add/dmn.Command/{dmn.Command}/description/{description}", addHandler)
+	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", addHandler)
 
 	http.Handle("/", r)
 

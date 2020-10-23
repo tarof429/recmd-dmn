@@ -23,34 +23,28 @@ const (
 
 // Secret represents the path and value of the secret. This is used to validate incoming requests.
 type Secret struct {
-	value string
-	path  string
+	Value string
+	Path  string
 }
 
-// CreateSecret create a new secret. This must be passed to the service to call the method successfully.
-func (secret *Secret) CreateSecret() {
+// Set sets the path to the secrets file
+func (secret *Secret) Set(path string) {
+	secret.Path = filepath.Join(path, recmdSecretFile)
+}
 
+// WriteSecretToFile creates the file containing the secret
+func (secret *Secret) WriteSecretToFile() error {
 	rand.Seed(time.Now().Unix())
 
-	var s string
+	secret.Value = ""
 
 	for i := 0; i < secretLength; i++ {
 		random := rand.Intn(len(secretCharSet))
 		randomChar := secretCharSet[random]
-		s += string(randomChar)
+		secret.Value += string(randomChar)
 	}
-	secret.value = s
-}
 
-// SetPathToSecretsFile sets the path to the secrets file
-func (secret *Secret) SetPathToSecretsFile(recmdDirPath string) {
-	secret.path = filepath.Join(recmdDirPath, recmdSecretFile)
-}
-
-// WriteSecretToFile creates the file containing the secret
-func (secret Secret) WriteSecretToFile() error {
-
-	file, err := os.Create(secret.path)
+	file, err := os.Create(secret.Path)
 
 	if err != nil {
 		return err
@@ -58,7 +52,7 @@ func (secret Secret) WriteSecretToFile() error {
 
 	defer file.Close()
 
-	_, err = io.WriteString(file, secret.value)
+	_, err = io.WriteString(file, secret.Value)
 
 	if err != nil {
 		return err
@@ -68,8 +62,8 @@ func (secret Secret) WriteSecretToFile() error {
 }
 
 // GetSecret gets the secret from the file system
-func (secret Secret) GetSecret() string {
-	secretData, err := ioutil.ReadFile(secret.path)
+func (secret *Secret) GetSecret() string {
+	secretData, err := ioutil.ReadFile(secret.Path)
 
 	if err != nil {
 		log.Fatalf("Error, unable to read secret from file %v\n", err)
@@ -84,5 +78,5 @@ func (secret Secret) GetSecret() string {
 
 // Valid checks whether the secret passed in as a parameter matches our secret
 func (secret Secret) Valid(test string) bool {
-	return secret.value == test
+	return secret.Value == test
 }
