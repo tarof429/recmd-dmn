@@ -16,8 +16,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import (
-	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -46,48 +44,8 @@ var (
 	requestHandler dmn.RequestHandler
 )
 
-// listHandler lists dmn.Commands
-func listHandler(w http.ResponseWriter, r *http.Request) {
-
-	// Get variables from the request
-	vars := mux.Vars(r)
-	var variables dmn.RequestVariable
-	err := variables.GetVariablesFromRequestVars(vars)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !secret.Valid(variables.Secret) {
-		log.Println("Bad secret!")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	ret, err := history.ReadCmdHistoryFile()
-
-	if err != nil {
-		log.Println("Unable to read history file")
-	}
-
-	w.WriteHeader(http.StatusOK)
-
-	out, err := json.Marshal(ret)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	io.WriteString(w, string(out))
-}
-
-// initTool initializes the tool
-func initTool() {
+// initDmn initializes the tool
+func initDmn() {
 
 	// Create ~/.recmd if it doesn't exist
 	homeDir, err := os.UserHomeDir()
@@ -137,10 +95,12 @@ func initTool() {
 }
 
 func main() {
-	initTool()
+
+	initDmn()
 
 	r := mux.NewRouter()
 
+	// Set some global variables used by all the handlers
 	requestHandler.Set(secret, history)
 
 	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", requestHandler.HandleDelete)
@@ -148,8 +108,7 @@ func main() {
 	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", requestHandler.HandleSelect)
 	r.HandleFunc("/secret/{secret}/search/description/{description}", requestHandler.HandleSelect)
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", requestHandler.HandleRun)
-
-	r.HandleFunc("/secret/{secret}/list", listHandler)
+	r.HandleFunc("/secret/{secret}/list", requestHandler.HandleList)
 
 	http.Handle("/", r)
 
