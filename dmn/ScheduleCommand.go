@@ -17,16 +17,8 @@ type ScheduledCommand struct {
 	EndTime    time.Time `json:"endTime"`
 }
 
-// RunMockCommand runs a mock dmn.Command
-func (sc *ScheduledCommand) RunMockCommand(c chan int) {
-	time.Sleep(1 * time.Second)
-	sc.ExitStatus = 99
-	sc.Coutput = "Mock stdout message"
-	c <- sc.ExitStatus
-}
-
 // RunShellScriptCommand runs a dmn.Command written to a temporary file
-func RunShellScriptCommand(sc *ScheduledCommand, c chan int) {
+func (sc *ScheduledCommand) RunShellScriptCommand(c chan int) {
 
 	tempFile, err := ioutil.TempFile(os.TempDir(), "recmd-")
 
@@ -64,5 +56,13 @@ func RunShellScriptCommand(sc *ScheduledCommand, c chan int) {
 
 	sc.Coutput = string(combinedOutput)
 
+	c <- sc.ExitStatus
+}
+
+// RunMockCommand runs a mock dmn.Command
+func (sc *ScheduledCommand) RunMockCommand(c chan int) {
+	time.Sleep(1 * time.Second)
+	sc.ExitStatus = 99
+	sc.Coutput = "Mock stdout message"
 	c <- sc.ExitStatus
 }
