@@ -5,7 +5,7 @@ build:
 default: build
 
 test:
-	(cd dmn; go test)
+	(cd dmn; go test -v)
 
 clean:
 	rm -f recmd-dmn

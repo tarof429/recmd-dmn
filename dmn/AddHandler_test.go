@@ -6,17 +6,21 @@ import (
 
 func TestAddHandler(t *testing.T) {
 
-	InitHandlerTest()
+	err := InitHandlerTest()
+
+	if err != nil {
+		t.Errorf("Error initializing test %v", err)
+	}
 
 	// Create a command
 	var cmd Command
 	cmd.Set("ls", "list files")
 
 	// Manually populate our history file
-	var addHandler AddHandler
+	var requestHandler RequestHandler
 
-	addHandler.Set(TestSecret, TestHistory)
-	ret := addHandler.SaveCmd(cmd)
+	requestHandler.Set(TestSecret, TestHistory)
+	ret := requestHandler.SaveCmd(cmd)
 
 	if ret != true {
 		t.Errorf("Unable to save command")

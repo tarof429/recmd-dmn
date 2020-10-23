@@ -1,6 +1,7 @@
 package dmn
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -20,6 +21,9 @@ var (
 // InitHandlerTest deletes and recreates the testdata sandbox directory for testing.
 // Global variables used by the test are also initialized.
 func InitHandlerTest() error {
+
+	fmt.Println("Intializing testdata dir...")
+
 	TestPath, err := os.Getwd()
 	if err != nil {
 		log.Println(err)
@@ -32,7 +36,7 @@ func InitHandlerTest() error {
 	os.Mkdir(TestDataDir, mode)
 
 	// Write the secret
-	TestSecret.Set(filepath.Join(TestPath, TestDataDir))
+	TestSecret.Set(TestDataDir)
 	err = TestSecret.WriteSecretToFile()
 	if err != nil {
 		return err
@@ -42,7 +46,7 @@ func InitHandlerTest() error {
 	}
 
 	// Create a history file
-	TestHistory.Set(filepath.Join(TestPath, TestDataDir))
+	TestHistory.Set(TestDataDir)
 	err = TestHistory.WriteHistoryToFile()
 	if err != nil {
 		return err

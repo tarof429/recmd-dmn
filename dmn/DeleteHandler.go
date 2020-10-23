@@ -10,20 +10,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// DeleteHandler handles deletes
-type DeleteHandler struct {
-	Secret  Secret
-	History HistoryFile
-}
-
-// Set sets some variables
-func (handler *DeleteHandler) Set(secret Secret, history HistoryFile) {
-	handler.Secret = secret
-	handler.History = history
-}
-
-// Handle deletess a Command
-func (handler *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) {
+// HandleDelete deletes a Command
+func (handler *RequestHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -64,7 +52,7 @@ func (handler *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 // DeleteCmd deletes a dmn.Command. It's best to pass in the dmn.CommandHash
 // because dmn.Commands may look similar.
-func (handler *DeleteHandler) DeleteCmd(value string) ([]Command, error) {
+func (handler *RequestHandler) DeleteCmd(value string) ([]Command, error) {
 
 	log.Println("Deleting " + value)
 

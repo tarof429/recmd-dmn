@@ -9,7 +9,11 @@ import (
 
 func TestDeleteHandler(t *testing.T) {
 
-	InitHandlerTest()
+	err := InitHandlerTest()
+
+	if err != nil {
+		t.Errorf("Error initializing test %v", err)
+	}
 
 	// Manually populate our history file
 	var cmd Command
@@ -20,16 +24,16 @@ func TestDeleteHandler(t *testing.T) {
 
 	updatedData, _ := json.MarshalIndent(cmds, "", "\t")
 
-	err := ioutil.WriteFile(TestHistory.Path, updatedData, os.FileMode(mode))
+	err = ioutil.WriteFile(TestHistory.Path, updatedData, os.FileMode(mode))
 	if err != nil {
 		t.Error(err)
 	}
 
-	var deleteHandler DeleteHandler
+	var requestHandler RequestHandler
 
-	deleteHandler.Set(TestSecret, TestHistory)
+	requestHandler.Set(TestSecret, TestHistory)
 
-	ret, err := deleteHandler.DeleteCmd(cmd.CmdHash)
+	ret, err := requestHandler.DeleteCmd(cmd.CmdHash)
 
 	if err != nil {
 		t.Error(err)

@@ -12,19 +12,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type AddHandler struct {
-	Secret  Secret
-	History HistoryFile
-}
-
-// Set sets some variables
-func (handler *AddHandler) Set(secret Secret, history HistoryFile) {
-	handler.Secret = secret
-	handler.History = history
-}
-
-// Handle adds a Command
-func (handler *AddHandler) Handle(w http.ResponseWriter, r *http.Request) {
+// HandleAdd adds a Command
+func (handler *RequestHandler) HandleAdd(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -63,7 +52,7 @@ func (handler *AddHandler) Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 // SaveCmd writes a dmn.Command to the history file
-func (handler *AddHandler) SaveCmd(cmd Command) bool {
+func (handler *RequestHandler) SaveCmd(cmd Command) bool {
 
 	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
 	f, err := os.Open(handler.History.Path)

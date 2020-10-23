@@ -43,11 +43,11 @@ const (
 var (
 	recmdDirPath string
 	//recmdSecretFilePath string
-	secretData    string
-	secret        dmn.Secret
-	history       dmn.HistoryFile
-	deleteHandler dmn.DeleteHandler
-	addHandler    dmn.AddHandler
+	secretData string
+	secret     dmn.Secret
+	history    dmn.HistoryFile
+
+	requestHandler dmn.RequestHandler
 )
 
 // SelectCmd returns a dmn.Command
@@ -472,11 +472,10 @@ func main() {
 
 	r := mux.NewRouter()
 
-	deleteHandler.Set(secret, history)
-	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", deleteHandler.Handle)
+	requestHandler.Set(secret, history)
 
-	addHandler.Set(secret, history)
-	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", addHandler.Handle)
+	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", requestHandler.HandleDelete)
+	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", requestHandler.HandleAdd)
 
 	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", selectHandler)
 	r.HandleFunc("/secret/{secret}/search/description/{description}", searchHandler)
