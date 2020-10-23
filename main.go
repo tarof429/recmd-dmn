@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -49,32 +48,6 @@ var (
 
 	requestHandler dmn.RequestHandler
 )
-
-// SearchCmd returns a dmn.Command by name
-func SearchCmd(value string) ([]dmn.Command, error) {
-
-	log.Println("Searching " + value)
-
-	cmds, error := history.ReadCmdHistoryFile()
-
-	ret := []dmn.Command{}
-
-	if error != nil {
-		return []dmn.Command{}, error
-	}
-
-	for _, cmd := range cmds {
-
-		// Use lower case for evaluation
-		comment := strings.ToLower(cmd.Description)
-
-		if strings.Contains(comment, value) {
-			ret = append(ret, cmd)
-		}
-	}
-
-	return ret, nil
-}
 
 // UpdateCommandDuration updates a dmn.Command with the same hash in the history file
 func UpdateCommandDuration(cmd dmn.Command, duration time.Duration) bool {
@@ -240,49 +213,6 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
-// searchHandler selects a dmn.Command
-func searchHandler(w http.ResponseWriter, r *http.Request) {
-
-	// Get variables from the request
-	vars := mux.Vars(r)
-	var variables dmn.RequestVariable
-	err := variables.GetVariablesFromRequestVars(vars)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !secret.Valid(variables.Secret) {
-		log.Println("Bad secret!")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
-	selectedCmds, cerr := SearchCmd(variables.Description)
-
-	if cerr != nil {
-		log.Println("Unable to select Command")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-
-	out, err := json.Marshal(selectedCmds)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	io.WriteString(w, string(out))
-}
-
 // runHandler runs a dmn.Command
 func runHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -407,8 +337,8 @@ func main() {
 	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", requestHandler.HandleDelete)
 	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", requestHandler.HandleAdd)
 	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", requestHandler.HandleSelect)
+	r.HandleFunc("/secret/{secret}/search/description/{description}", requestHandler.HandleSelect)
 
-	r.HandleFunc("/secret/{secret}/search/description/{description}", searchHandler)
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", runHandler)
 	r.HandleFunc("/secret/{secret}/list", listHandler)
 
