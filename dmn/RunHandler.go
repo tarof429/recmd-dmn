@@ -13,7 +13,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// HandleRun runs a Command
+// HandleRun runs a Command. If the command was run, we return status 200 regardless of
+// whether it was run successfully or not, or whether there was an issue in writing the duration.
+// This should be improved; however, the client still receives the ScedheduledCommand struct
+// so any error messages will be there.
 func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
@@ -54,7 +57,13 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 
 	var sc ScheduledCommand
 
-	sc = handler.ScheduleCommand(selectedCmd, sc.RunShellScriptCommand)
+	sc = handler.ScheduleCommand(selectedCmd)
+
+	ret := handler.UpdateCommandDuration(selectedCmd, sc.Duration)
+
+	if ret != true {
+		log.Printf("Error in updating command duration\n")
+	}
 
 	log.Println("Command completed")
 
@@ -63,34 +72,12 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 	out, _ := json.Marshal(sc)
 
 	io.WriteString(w, string(out))
-
-	// if len(sc.Coutput) != 0 {
-
-	// 	// fmt.Println(sc.Coutput)
-	// 	w.WriteHeader(http.StatusOK)
-
-	// 	out, err := json.Marshal(sc)
-
-	// 	if err != nil {
-	// 		w.WriteHeader(http.StatusBadRequest)
-	// 		return
-	// 	}
-	// 	io.WriteString(w, string(out))
-	// }
-
-	// log.Println("Updating command duration")
-	// ret := handler.UpdateCommandDuration(selectedCmd, sc.Duration)
-
-	// if ret != true {
-	// 	w.WriteHeader(http.StatusBadRequest)
-	//}
-
 }
 
-// ScheduleCommand runs a dmn.Command based on a function passed in as the second parameter.
-// This gives the ability to run dmn.Commands in multiple ways; for example, as a "mock" Command
-// (RunMockCommand) or a shell script dmn.Command (RunShellScriptdmn.Command).
-func (handler *RequestHandler) ScheduleCommand(cmd Command, f func(chan int)) ScheduledCommand {
+// ScheduleCommand runs a Command based on a function passed in as the second parameter.
+// This gives the ability to run Commands in multiple ways; for example, as a "mock" Command
+// (RunMockCommand) or a shell script Command (RunShellScriptCommand).
+func (handler *RequestHandler) ScheduleCommand(cmd Command) ScheduledCommand {
 
 	var sc ScheduledCommand
 
@@ -187,7 +174,6 @@ func (handler *RequestHandler) UpdateCommandDuration(cmd Command, duration time.
 	// Update the duration for the dmn.Command
 	for index, c := range cmds {
 		if c.CmdHash == cmd.CmdHash {
-			//fmt.Println("Found dmn.Command")
 			foundIndex = index
 			found = true
 			//c.Duration = cmd.Duration
