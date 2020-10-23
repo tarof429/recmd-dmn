@@ -22,7 +22,7 @@ func (handler *DeleteHandler) Set(secret Secret, history HistoryFile) {
 	handler.History = history
 }
 
-// Handle deletess a dmn.Command
+// Handle deletess a Command
 func (handler *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
