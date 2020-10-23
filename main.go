@@ -112,6 +112,7 @@ func main() {
 
 	http.Handle("/", r)
 
+	log.Printf("Starting server on %v\n", serverPort)
 	log.Fatal(http.ListenAndServe(serverPort, nil))
 
 }
