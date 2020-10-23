@@ -1,6 +1,8 @@
 package dmn
 
-import "encoding/base64"
+import (
+	"encoding/base64"
+)
 
 // RequestVariable represents variables passed into the request
 type RequestVariable struct {
@@ -40,5 +42,6 @@ func (variables *RequestVariable) GetVariablesFromRequestVars(vars map[string]st
 	variables.Description = string(description)
 	variables.Command = string(command)
 
+	//log.Printf("Command hash received: %v\n", variables.CmdHash)
 	return nil
 }

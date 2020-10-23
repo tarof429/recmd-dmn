@@ -54,28 +54,36 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 
 	var sc ScheduledCommand
 
-	handler.ScheduleCommand(selectedCmd, sc.RunShellScriptCommand)
+	sc = handler.ScheduleCommand(selectedCmd, sc.RunShellScriptCommand)
 
 	log.Println("Command completed")
 
-	if len(sc.Coutput) != 0 {
-		// fmt.Println(sc.Coutput)
-		w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusOK)
 
-		out, err := json.Marshal(sc)
+	out, _ := json.Marshal(sc)
 
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		io.WriteString(w, string(out))
-	}
+	io.WriteString(w, string(out))
 
-	ret := handler.UpdateCommandDuration(selectedCmd, sc.Duration)
+	// if len(sc.Coutput) != 0 {
 
-	if ret != true {
-		w.WriteHeader(http.StatusBadRequest)
-	}
+	// 	// fmt.Println(sc.Coutput)
+	// 	w.WriteHeader(http.StatusOK)
+
+	// 	out, err := json.Marshal(sc)
+
+	// 	if err != nil {
+	// 		w.WriteHeader(http.StatusBadRequest)
+	// 		return
+	// 	}
+	// 	io.WriteString(w, string(out))
+	// }
+
+	// log.Println("Updating command duration")
+	// ret := handler.UpdateCommandDuration(selectedCmd, sc.Duration)
+
+	// if ret != true {
+	// 	w.WriteHeader(http.StatusBadRequest)
+	//}
 
 }
 
@@ -91,14 +99,16 @@ func (handler *RequestHandler) ScheduleCommand(cmd Command, f func(chan int)) Sc
 	sc.Description = cmd.Description
 	sc.Duration = -1
 
+	log.Printf("Running command with hash: %v\n", sc.CmdHash)
+
 	// Create a channel to hold exit status
 	c := make(chan int)
 
 	// Set the start time
 	sc.StartTime = time.Now()
 
-	// Run the dmn.Command in a goroutine
-	go f(c)
+	// Run the Command in a goroutine
+	go sc.RunShellScriptCommand(c)
 
 	// Receive the exit status of the dmn.Command
 	status := <-c
@@ -119,8 +129,10 @@ func (handler *RequestHandler) ScheduleCommand(cmd Command, f func(chan int)) Sc
 	return sc
 }
 
-// UpdateCommandDuration updates a dmn.Command with the same hash in the history file
+// UpdateCommandDuration updates a Command with the same hash in the history file
 func (handler *RequestHandler) UpdateCommandDuration(cmd Command, duration time.Duration) bool {
+
+	log.Printf("Updating duration: %v\n", duration)
 
 	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
 	f, err := os.Open(handler.History.Path)

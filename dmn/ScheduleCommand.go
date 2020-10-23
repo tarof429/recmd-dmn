@@ -20,6 +20,9 @@ type ScheduledCommand struct {
 // RunShellScriptCommand runs a dmn.Command written to a temporary file
 func (sc *ScheduledCommand) RunShellScriptCommand(c chan int) {
 
+	// log.Printf("In RunShellScriptCommand")
+	// log.Printf("Will run: %v\n", sc.CmdString)
+
 	tempFile, err := ioutil.TempFile(os.TempDir(), "recmd-")
 
 	if err != nil {

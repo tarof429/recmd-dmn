@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// HandleSelect selects a Command
+// HandleSelect selects a Command by its hash
 func (handler *RequestHandler) HandleSelect(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request

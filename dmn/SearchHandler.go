@@ -54,7 +54,7 @@ func (handler *RequestHandler) HandleSearch(w http.ResponseWriter, r *http.Reque
 	io.WriteString(w, string(out))
 }
 
-// SearchCmd returns a dmn.Command by name
+// SearchCmd returns a Command by name
 func (handler *RequestHandler) SearchCmd(value string) ([]Command, error) {
 
 	log.Println("Searching " + value)

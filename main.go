@@ -106,7 +106,7 @@ func main() {
 	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", requestHandler.HandleDelete)
 	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", requestHandler.HandleAdd)
 	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", requestHandler.HandleSelect)
-	r.HandleFunc("/secret/{secret}/search/description/{description}", requestHandler.HandleSelect)
+	r.HandleFunc("/secret/{secret}/search/description/{description}", requestHandler.HandleSearch)
 	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", requestHandler.HandleRun)
 	r.HandleFunc("/secret/{secret}/list", requestHandler.HandleList)
 
