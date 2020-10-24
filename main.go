@@ -26,41 +26,50 @@ import (
 )
 
 const (
-	// Port that this program listens to
-	serverPort = ":8999"
+	// DefaultServerPort is the port that this program listens to
+	DefaultServerPort = ":8999"
 
-	// Directory containing configuration and dmn.Command history
-	recmdDir = ".recmd"
+	// DefaultConfigDir is a directory containing configuration and the Command history file
+	DefaultConfigDir = ".recmd"
+
+	// TestConfigDir is used for testing
+	TestConfigDir = "testdata"
 )
 
-// Global variables
-var (
-	recmdDirPath string
-	//recmdSecretFilePath string
-	secretData string
-	secret     dmn.Secret
-	history    dmn.HistoryFile
+// App represents this API server
+type App struct {
+	ConfigPath     string
+	Router         *mux.Router
+	RequestHandler dmn.RequestHandler
+}
 
-	requestHandler dmn.RequestHandler
-)
+// Initialize initializes the application
+func (a *App) Initialize(configPath string) {
 
-// initDmn initializes the tool
-func initDmn() {
+	a.Router = mux.NewRouter()
 
-	// Create ~/.recmd if it doesn't exist
-	homeDir, err := os.UserHomeDir()
+	a.InitializeConfigPath(configPath)
 
-	if err != nil {
-		log.Fatalf("Error, unable to obtain home directory path %v\n", err)
-	}
+	secret := a.CreateSecret()
 
-	recmdDirPath = filepath.Join(homeDir, recmdDir)
-	fileInfo, statErr := os.Stat(recmdDirPath)
+	historyFile := a.CreateHistoryFile()
 
-	if os.IsNotExist((statErr)) {
+	a.RequestHandler.Set(secret, historyFile)
+
+	a.InitializeRoutes()
+}
+
+// InitializeConfigPath creates the config directory if it doesn't exist
+func (a *App) InitializeConfigPath(configPath string) {
+
+	a.ConfigPath = configPath
+
+	fileInfo, statErr := os.Stat(a.ConfigPath)
+
+	if os.IsNotExist(statErr) {
+
 		mode := int(0755)
-
-		err = os.Mkdir(recmdDirPath, os.FileMode(mode))
+		err := os.Mkdir(a.ConfigPath, os.FileMode(mode))
 
 		if err != nil {
 			log.Fatalf("Error, unable to create ~/.recmd: %v\n", err)
@@ -68,51 +77,100 @@ func initDmn() {
 	} else if !fileInfo.IsDir() {
 		log.Fatalf("Error, ~/.recmd is not a directory")
 	}
+}
 
-	// Every time this program starts, create a new secret
-	secret.Set(recmdDirPath)
-	err = secret.WriteSecretToFile()
+// CreateSecret creates the secret whenever the application starts
+func (a *App) CreateSecret() dmn.Secret {
+
+	var secret dmn.Secret
+
+	secret.Set(a.ConfigPath)
+
+	err := secret.WriteSecretToFile()
+
 	if err != nil {
-		log.Fatalf("Error, unable to create secrets file %v\n", err)
-		return
-	}
-	if secret.GetSecret() == "" {
-		log.Fatalf("Error, secret was an empty string")
-		return
+		log.Printf("Error, unable to create secrets file %v\n", err)
+
 	}
 
-	// Load the history file. If it doesn't exist, create it.
-	history.Set(recmdDirPath)
-	_, statErr = os.Stat(history.Path)
+	if secret.GetSecret() == "" {
+		log.Printf("Error, secret was an empty string")
+	}
+
+	return secret
+}
+
+// CreateHistoryFile initializes the historyFile file
+func (a *App) CreateHistoryFile() dmn.HistoryFile {
+
+	var historyFile dmn.HistoryFile
+
+	historyFile.Set(a.ConfigPath)
+
+	_, statErr := os.Stat(historyFile.Path)
+
 	if os.IsNotExist(statErr) {
-		err = history.WriteHistoryToFile()
+
+		err := historyFile.WriteHistoryToFile()
+
 		if err != nil {
-			log.Fatalf("Error, unable to create history file")
-			return
+			log.Printf("Error, unable to create historyFile file")
+
 		}
 	}
 
+	return historyFile
+}
+
+// InitializeRoutes initializes the routes for this application
+func (a *App) InitializeRoutes() {
+	a.Router.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", a.RequestHandler.HandleDelete)
+	a.Router.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", a.RequestHandler.HandleAdd)
+	a.Router.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", a.RequestHandler.HandleSelect)
+	a.Router.HandleFunc("/secret/{secret}/search/description/{description}", a.RequestHandler.HandleSearch)
+	a.Router.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", a.RequestHandler.HandleRun)
+	a.Router.HandleFunc("/secret/{secret}/list", a.RequestHandler.HandleList)
+
+	http.Handle("/", a.Router)
+}
+
+// Run runs the application
+func (a *App) Run() {
+	log.Printf("Starting server on %v\n", DefaultServerPort)
+	log.Fatal(http.ListenAndServe(DefaultServerPort, nil))
+}
+
+// GetDefaultConfigPath gets the default configPath which is ~/.recmd
+func GetDefaultConfigPath() string {
+
+	homeDir, err := os.UserHomeDir()
+
+	if err != nil {
+		log.Fatalf("Error, unable to obtain home directory path %v\n", err)
+	}
+
+	return filepath.Join(homeDir, DefaultConfigDir)
+}
+
+// GetTestConfigPath gets the test configPath which is ./testdata
+func GetTestConfigPath() string {
+
+	testPath, err := os.Getwd()
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	return filepath.Join(testPath, TestConfigDir)
 }
 
 func main() {
 
-	initDmn()
+	a := App{}
 
-	r := mux.NewRouter()
+	configPath := GetDefaultConfigPath()
 
-	// Set some global variables used by all the handlers
-	requestHandler.Set(secret, history)
+	a.Initialize(configPath)
 
-	r.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", requestHandler.HandleDelete)
-	r.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", requestHandler.HandleAdd)
-	r.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", requestHandler.HandleSelect)
-	r.HandleFunc("/secret/{secret}/search/description/{description}", requestHandler.HandleSearch)
-	r.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", requestHandler.HandleRun)
-	r.HandleFunc("/secret/{secret}/list", requestHandler.HandleList)
-
-	http.Handle("/", r)
-
-	log.Printf("Starting server on %v\n", serverPort)
-	log.Fatal(http.ListenAndServe(serverPort, nil))
-
+	a.Run()
 }

@@ -19,6 +19,8 @@ import (
 // so any error messages will be there.
 func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request) {
 
+	log.Printf("Running command")
+
 	// Get variables from the request
 	vars := mux.Vars(r)
 	var variables RequestVariable
