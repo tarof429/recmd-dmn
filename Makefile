@@ -5,6 +5,7 @@ build:
 default: build
 
 test:
+	go test -v
 	(cd dmn; go test -v)
 
 clean:

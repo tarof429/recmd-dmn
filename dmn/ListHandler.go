@@ -26,7 +26,7 @@ func (handler *RequestHandler) HandleList(w http.ResponseWriter, r *http.Request
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
 	if !handler.Secret.Valid(variables.Secret) {
-		log.Println("Bad secret!")
+		log.Printf("Bad secret! Expected %v but got t%v\n", handler.Secret.GetSecret(), variables.Secret)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

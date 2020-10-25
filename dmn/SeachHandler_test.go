@@ -2,7 +2,7 @@ package dmn
 
 import "testing"
 
-func TestSearchtHandler(t *testing.T) {
+func TestSearchHandler(t *testing.T) {
 
 	err := InitHandlerTest()
 

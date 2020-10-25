@@ -55,9 +55,9 @@ func (handler *RequestHandler) HandleSearch(w http.ResponseWriter, r *http.Reque
 }
 
 // SearchCmd returns a Command by name
-func (handler *RequestHandler) SearchCmd(value string) ([]Command, error) {
+func (handler *RequestHandler) SearchCmd(description string) ([]Command, error) {
 
-	log.Println("Searching " + value)
+	log.Println("Searching " + description)
 
 	cmds, error := handler.History.ReadCmdHistoryFile()
 
@@ -67,12 +67,14 @@ func (handler *RequestHandler) SearchCmd(value string) ([]Command, error) {
 		return []Command{}, error
 	}
 
+	expectedDescription := strings.ToLower(description)
+
 	for _, cmd := range cmds {
 
 		// Use lower case for evaluation
-		description := strings.ToLower(cmd.Description)
+		lowerDescription := strings.ToLower(cmd.Description)
 
-		if strings.Contains(description, value) {
+		if strings.Contains(lowerDescription, expectedDescription) {
 			ret = append(ret, cmd)
 		}
 	}

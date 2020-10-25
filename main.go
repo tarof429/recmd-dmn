@@ -41,6 +41,7 @@ type App struct {
 	ConfigPath     string
 	Router         *mux.Router
 	RequestHandler dmn.RequestHandler
+	DmnSecret      dmn.Secret
 }
 
 // Initialize initializes the application
@@ -57,6 +58,7 @@ func (a *App) Initialize(configPath string) {
 	a.RequestHandler.Set(secret, historyFile)
 
 	a.InitializeRoutes()
+
 }
 
 // InitializeConfigPath creates the config directory if it doesn't exist
@@ -82,22 +84,25 @@ func (a *App) InitializeConfigPath(configPath string) {
 // CreateSecret creates the secret whenever the application starts
 func (a *App) CreateSecret() dmn.Secret {
 
-	var secret dmn.Secret
+	a.DmnSecret.Set(a.ConfigPath)
 
-	secret.Set(a.ConfigPath)
-
-	err := secret.WriteSecretToFile()
+	err := a.DmnSecret.WriteSecretToFile()
 
 	if err != nil {
 		log.Printf("Error, unable to create secrets file %v\n", err)
 
 	}
 
-	if secret.GetSecret() == "" {
+	if a.DmnSecret.GetSecret() == "" {
 		log.Printf("Error, secret was an empty string")
 	}
 
-	return secret
+	return a.DmnSecret
+}
+
+// GetSecret just returns the secret
+func (a *App) GetSecret() dmn.Secret {
+	return a.DmnSecret
 }
 
 // CreateHistoryFile initializes the historyFile file
