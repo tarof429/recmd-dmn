@@ -57,21 +57,26 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 
 	log.Println("Scheduling Command")
 
-	var sc ScheduledCommand
+	handler.CommandScheduler.Schedule(selectedCmd)
+	// var sc ScheduledCommand
 
-	sc = handler.ScheduleCommand(selectedCmd)
+	// sc = handler.ScheduleCommand(selectedCmd)
 
-	ret := handler.UpdateCommandDuration(selectedCmd, sc.Duration)
+	// ret := handler.UpdateCommandDuration(selectedCmd, sc.Duration)
 
-	if ret != true {
-		log.Printf("Error in updating command duration\n")
-	}
+	// if ret != true {
+	// 	log.Printf("Error in updating command duration\n")
+	// }
 
-	log.Println("Command completed")
+	//log.Println("Command completed")
 
 	w.WriteHeader(http.StatusOK)
 
-	out, _ := json.Marshal(sc)
+	completedCommand := <-handler.CommandScheduler.CompletedQueue
+
+	handler.UpdateCommandDuration(selectedCmd, completedCommand.Duration)
+
+	out, _ := json.Marshal(completedCommand)
 
 	io.WriteString(w, string(out))
 }

@@ -57,8 +57,11 @@ func (a *App) Initialize(configPath string) {
 
 	a.RequestHandler.Set(secret, historyFile)
 
+	a.RequestHandler.CommandScheduler.CreateScheduler()
+
 	a.InitializeRoutes()
 
+	go a.RequestHandler.CommandScheduler.RunScheduler()
 }
 
 // InitializeConfigPath creates the config directory if it doesn't exist
