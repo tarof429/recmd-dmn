@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// The dmn.Command history file
+	// The Command history file
 	recmdHistoryFile = "recmd_history.json"
 )
 
@@ -21,7 +21,7 @@ func (h *HistoryFile) Set(path string) {
 	h.Path = filepath.Join(path, recmdHistoryFile)
 }
 
-// ReadCmdHistoryFile reads historyFile and generates a list of dmn.Command structs
+// ReadCmdHistoryFile reads historyFile and generates a list of Command structs
 func (h *HistoryFile) ReadCmdHistoryFile() ([]Command, error) {
 
 	var (

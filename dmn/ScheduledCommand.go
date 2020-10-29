@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// ScheduledCommand represents a dmn.Command that is scheduled to run
+// ScheduledCommand represents a Command that is scheduled to run
 type ScheduledCommand struct {
 	Command
 	Coutput    string    `json:"coutput"`
@@ -17,7 +17,7 @@ type ScheduledCommand struct {
 	EndTime    time.Time `json:"endTime"`
 }
 
-// RunShellScriptCommand runs a dmn.Command written to a temporary file
+// RunShellScriptCommand runs a Command written to a temporary file
 func (sc *ScheduledCommand) RunShellScriptCommand(c chan int) {
 
 	// log.Printf("In RunShellScriptCommand")
@@ -62,7 +62,7 @@ func (sc *ScheduledCommand) RunShellScriptCommand(c chan int) {
 	c <- sc.ExitStatus
 }
 
-// RunMockCommand runs a mock dmn.Command
+// RunMockCommand runs a mock Command
 func (sc *ScheduledCommand) RunMockCommand(c chan int) {
 	time.Sleep(1 * time.Second)
 	sc.ExitStatus = 99
