@@ -34,6 +34,8 @@ const (
 
 	// TestConfigDir is used for testing
 	TestConfigDir = "testdata"
+
+	DefaultLogFile = "recmd-dmn.log"
 )
 
 // App represents this API server
@@ -46,6 +48,8 @@ type App struct {
 
 // Initialize initializes the application
 func (a *App) Initialize(configPath string) {
+
+	a.CreateLogs()
 
 	a.Router = mux.NewRouter()
 
@@ -82,6 +86,21 @@ func (a *App) InitializeConfigPath(configPath string) {
 	} else if !fileInfo.IsDir() {
 		log.Fatalf("Error, ~/.recmd is not a directory")
 	}
+}
+
+// CreateLogs creates a new log file
+func (a *App) CreateLogs() {
+	f, err := os.Create(DefaultLogFile)
+
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	// Not sure how to close it
+	//defer f.Close()
+
+	a.RequestHandler.Log = log.New(f, "", log.LstdFlags|log.Lshortfile)
+
 }
 
 // CreateSecret creates the secret whenever the application starts
@@ -180,6 +199,8 @@ func main() {
 	configPath := GetDefaultConfigPath()
 
 	a.Initialize(configPath)
+
+	a.RequestHandler.Log.Printf("Starting up!")
 
 	a.Run()
 }

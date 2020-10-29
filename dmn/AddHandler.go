@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 
@@ -29,7 +28,7 @@ func (handler *RequestHandler) HandleAdd(w http.ResponseWriter, r *http.Request)
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
 	if !handler.Secret.Valid(variables.Secret) {
-		log.Println("Bad secret!")
+		handler.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -39,7 +38,7 @@ func (handler *RequestHandler) HandleAdd(w http.ResponseWriter, r *http.Request)
 
 	testCmd.Set(variables.Command, variables.Description)
 
-	log.Printf("Adding command: " + testCmd.CmdHash)
+	handler.Log.Printf("Adding command: " + testCmd.CmdHash)
 
 	if handler.SaveCmd(*testCmd) != true {
 		w.WriteHeader(http.StatusBadRequest)

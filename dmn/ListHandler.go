@@ -3,7 +3,6 @@ package dmn
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,6 +10,8 @@ import (
 
 // HandleList lists Commands
 func (handler *RequestHandler) HandleList(w http.ResponseWriter, r *http.Request) {
+
+	handler.Log.Printf("Handling list")
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -26,7 +27,7 @@ func (handler *RequestHandler) HandleList(w http.ResponseWriter, r *http.Request
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
 	if !handler.Secret.Valid(variables.Secret) {
-		log.Printf("Bad secret! Expected %v but got t%v\n", handler.Secret.GetSecret(), variables.Secret)
+		handler.Log.Printf("Bad secret! Expected %v but got t%v\n", handler.Secret.GetSecret(), variables.Secret)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -34,7 +35,7 @@ func (handler *RequestHandler) HandleList(w http.ResponseWriter, r *http.Request
 	cmds, err := handler.ListCmd()
 
 	if err != nil {
-		log.Println("Unable to read history file")
+		handler.Log.Println("Unable to read history file")
 	}
 
 	w.WriteHeader(http.StatusOK)
