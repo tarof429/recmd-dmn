@@ -10,6 +10,7 @@ import (
 type Scheduler struct {
 	Queue          chan ScheduledCommand
 	CompletedQueue chan ScheduledCommand
+	QueuedCommands []ScheduledCommand
 }
 
 // CreateScheduler creates the channels
@@ -27,7 +28,9 @@ func (scheduler *Scheduler) Schedule(cmd Command) {
 	sc.CmdString = cmd.CmdString
 	sc.Description = cmd.Description
 	sc.Duration = -1
-	sc.Status = Queued
+	sc.Status = Queued // Set the initial status
+
+	scheduler.QueuedCommands = append(scheduler.QueuedCommands, sc)
 
 	scheduler.Queue <- sc
 }
@@ -52,12 +55,16 @@ func (scheduler *Scheduler) RunSchedulerMock() {
 func (scheduler *Scheduler) RunScheduler() {
 
 	for sc := range scheduler.Queue {
+
+		scheduler.QueuedCommands[0].Status = Running // Change the status to 'running'
+
 		sc.Status = Running
 		sc.StartTime = time.Now()
 		sc.RunShellScriptCommandWithExitStatus()
 		sc.EndTime = time.Now()
 		sc.Duration = sc.EndTime.Sub(sc.StartTime)
 		sc.Status = Completed
+		scheduler.QueuedCommands = scheduler.QueuedCommands[1:]
 
 		if sc.ExitStatus != 0 {
 			fmt.Fprintf(os.Stderr, "\nError: Command failed.\n")

@@ -19,11 +19,11 @@ const (
 // ScheduledCommand represents a Command that is scheduled to run
 type ScheduledCommand struct {
 	Command
-	Coutput    string    `json:"coutput"`
-	ExitStatus int       `json:"exitStatus"`
-	StartTime  time.Time `json:"startTime"`
-	EndTime    time.Time `json:"endTime"`
-	Status     ScheduledStatus
+	Coutput    string          `json:"coutput"`
+	ExitStatus int             `json:"exitStatus"`
+	StartTime  time.Time       `json:"startTime"`
+	EndTime    time.Time       `json:"endTime"`
+	Status     ScheduledStatus `json:"status"`
 }
 
 // RunShellScriptCommandWithExitStatus runs a Command written to a temporary file

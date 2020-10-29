@@ -138,6 +138,7 @@ func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/secret/{secret}/search/description/{description}", a.RequestHandler.HandleSearch)
 	a.Router.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", a.RequestHandler.HandleRun)
 	a.Router.HandleFunc("/secret/{secret}/list", a.RequestHandler.HandleList)
+	a.Router.HandleFunc("/secret/{secret}/status", a.RequestHandler.HandleStatus)
 
 	http.Handle("/", a.Router)
 }
