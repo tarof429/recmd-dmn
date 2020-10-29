@@ -39,6 +39,8 @@ func (handler *RequestHandler) HandleAdd(w http.ResponseWriter, r *http.Request)
 
 	testCmd.Set(variables.Command, variables.Description)
 
+	log.Printf("Adding command: " + testCmd.CmdHash)
+
 	if handler.SaveCmd(*testCmd) != true {
 		w.WriteHeader(http.StatusBadRequest)
 		out, _ := json.Marshal("false")
