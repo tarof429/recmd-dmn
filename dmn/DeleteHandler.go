@@ -3,7 +3,6 @@ package dmn
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
@@ -27,7 +26,7 @@ func (handler *RequestHandler) HandleDelete(w http.ResponseWriter, r *http.Reque
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
 	if !handler.Secret.Valid(variables.Secret) {
-		log.Println("Bad secret!")
+		handler.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -54,7 +53,7 @@ func (handler *RequestHandler) HandleDelete(w http.ResponseWriter, r *http.Reque
 // because dmn.Commands may look similar.
 func (handler *RequestHandler) DeleteCmd(value string) ([]Command, error) {
 
-	log.Println("Deleting " + value)
+	handler.Log.Println("Deleting " + value)
 
 	ret := []Command{}
 

@@ -33,7 +33,7 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
 	if !handler.Secret.Valid(variables.Secret) {
-		log.Println("Bad secret!")
+		handler.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -42,18 +42,18 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 	selectedCmd, cerr := handler.SelectCmd(variables.CmdHash)
 
 	if cerr != nil {
-		log.Println("Unable to select Command")
+		handler.Log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if selectedCmd.CmdHash == "" {
-		log.Println("Invalid hash")
+		handler.Log.Println("Invalid hash")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	log.Println("Scheduling Command: " + selectedCmd.CmdHash)
+	handler.Log.Println("Scheduling Command: " + selectedCmd.CmdHash)
 
 	handler.CommandScheduler.Schedule(selectedCmd)
 
@@ -71,7 +71,7 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 // UpdateCommandDuration updates a Command with the same hash in the history file
 func (handler *RequestHandler) UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 
-	log.Printf("Updating %v: ran %v\n", cmd.CmdHash, duration)
+	log.Printf("Updating %v: ran in %v\n", cmd.CmdHash, duration)
 
 	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
 	f, err := os.Open(handler.History.Path)

@@ -3,7 +3,6 @@ package dmn
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
@@ -27,7 +26,7 @@ func (handler *RequestHandler) HandleSelect(w http.ResponseWriter, r *http.Reque
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
 	if !handler.Secret.Valid(variables.Secret) {
-		log.Println("Bad secret!")
+		handler.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -36,13 +35,13 @@ func (handler *RequestHandler) HandleSelect(w http.ResponseWriter, r *http.Reque
 	selectedCmd, cerr := handler.SelectCmd(variables.CmdHash)
 
 	if cerr != nil {
-		log.Println("Unable to select Command")
+		handler.Log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if selectedCmd.CmdHash == "" {
-		log.Println("Invalid hash")
+		handler.Log.Println("Invalid hash")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -62,7 +61,7 @@ func (handler *RequestHandler) HandleSelect(w http.ResponseWriter, r *http.Reque
 // SelectCmd returns a Command
 func (handler *RequestHandler) SelectCmd(value string) (Command, error) {
 
-	log.Println("Selecting " + value)
+	handler.Log.Println("Selecting " + value)
 
 	cmds, error := handler.History.ReadCmdHistoryFile()
 
