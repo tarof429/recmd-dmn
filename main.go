@@ -34,6 +34,8 @@ const (
 
 	// TestConfigDir is used for testing
 	TestConfigDir = "testdata"
+
+	DefaultLogFile = "recmd-dmn.log"
 )
 
 // App represents this API server
@@ -88,7 +90,7 @@ func (a *App) InitializeConfigPath(configPath string) {
 
 // CreateLogs creates a new log file
 func (a *App) CreateLogs() {
-	f, err := os.Create("recmd-dmn-log")
+	f, err := os.Create(DefaultLogFile)
 
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)

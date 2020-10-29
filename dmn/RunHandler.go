@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -71,7 +70,7 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 // UpdateCommandDuration updates a Command with the same hash in the history file
 func (handler *RequestHandler) UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 
-	log.Printf("Updating %v: ran in %v\n", cmd.CmdHash, duration)
+	handler.Log.Printf("Updating %v: ran in %v\n", cmd.CmdHash, duration)
 
 	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
 	f, err := os.Open(handler.History.Path)
