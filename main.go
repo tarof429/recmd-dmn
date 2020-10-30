@@ -152,7 +152,7 @@ func (a *App) CreateHistoryFile() dmn.HistoryFile {
 // InitializeRoutes initializes the routes for this application
 func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", a.RequestHandler.HandleDelete)
-	a.Router.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}", a.RequestHandler.HandleAdd)
+	a.Router.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}", a.RequestHandler.HandleAdd)
 	a.Router.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", a.RequestHandler.HandleSelect)
 	a.Router.HandleFunc("/secret/{secret}/search/description/{description}", a.RequestHandler.HandleSearch)
 	a.Router.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", a.RequestHandler.HandleRun)

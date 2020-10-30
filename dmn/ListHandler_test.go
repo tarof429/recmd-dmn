@@ -16,7 +16,7 @@ func TestListHandler(t *testing.T) {
 
 	// Create a command
 	var cmd Command
-	cmd.Set("ls", "list files")
+	cmd.Set("ls", "list files", ".")
 
 	// Manually populate our history file
 	var requestHandler RequestHandler

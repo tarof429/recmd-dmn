@@ -20,8 +20,9 @@ func TestSelectHandler(t *testing.T) {
 
 	cmdStr := "ls -ltr"
 	cmdDescription := "list files"
+	workingDirectory := "."
 
-	cmd.Set(cmdStr, cmdDescription)
+	cmd.Set(cmdStr, cmdDescription, workingDirectory)
 	expectedCommandHash := cmd.CmdHash
 
 	fmt.Println("Looking for " + expectedCommandHash)

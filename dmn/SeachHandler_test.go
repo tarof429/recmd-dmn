@@ -19,8 +19,9 @@ func TestSearchHandler(t *testing.T) {
 
 	cmdStr := "ls -ltr"
 	cmdDescription := "list files"
+	workingDirectory := "."
 
-	cmd.Set(cmdStr, cmdDescription)
+	cmd.Set(cmdStr, cmdDescription, workingDirectory)
 
 	// Manually populate our history file
 	var requestHandler RequestHandler

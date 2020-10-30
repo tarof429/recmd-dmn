@@ -27,6 +27,7 @@ func (scheduler *Scheduler) Schedule(cmd Command) {
 	sc.CmdHash = cmd.CmdHash
 	sc.CmdString = cmd.CmdString
 	sc.Description = cmd.Description
+	sc.WorkingDirectory = cmd.WorkingDirectory
 	sc.Duration = -1
 	sc.Status = Queued // Set the initial status
 

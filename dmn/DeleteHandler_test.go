@@ -18,7 +18,7 @@ func TestDeleteHandler(t *testing.T) {
 
 	// Manually populate our history file
 	var cmd Command
-	cmd.Set("ls", "list files")
+	cmd.Set("ls", "list files", ".")
 	var cmds []Command
 	cmds = append(cmds, cmd)
 	mode := int(0644)
