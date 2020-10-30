@@ -18,6 +18,8 @@ func TestScheduler(t *testing.T) {
 	var scheduler Scheduler
 	scheduler.CreateScheduler()
 
+	defer scheduler.Shutdown() // Shutdown the scheduler to close the channels
+
 	var cmd1 Command
 	cmd1.CmdString = "#This is a command"
 	cmd1.CmdHash = formattedHash(cmd1.CmdString)
@@ -26,14 +28,19 @@ func TestScheduler(t *testing.T) {
 	cmd2.CmdString = "#This is another command"
 	cmd2.CmdHash = formattedHash(cmd2.CmdString)
 
-	go scheduler.Schedule(cmd1)
-	go scheduler.Schedule(cmd2)
-
+	// Create a goroutine to continuously read from the CompletedQueue channel
 	go func() {
-		time.Sleep(time.Second * 3)
-		scheduler.Shutdown()
+		for sc := range scheduler.CompletedQueue {
+			fmt.Printf("Command received from CompletedQueue: %v\n", sc.CmdHash)
+		}
 	}()
 
-	scheduler.RunSchedulerMock()
+	// Schedule the Commands. This will take Commands off of the CommandQueue, run them, and put the ScheduledCommands onto the CompletedQueue
+	go scheduler.RunSchedulerMock()
 
+	// Now feed the CommandQueue
+	scheduler.CommandQueue <- cmd1
+	scheduler.CommandQueue <- cmd2
+
+	time.Sleep(time.Second * 3)
 }

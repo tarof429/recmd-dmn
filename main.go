@@ -61,10 +61,9 @@ func (a *App) Initialize(configPath string) {
 
 	a.RequestHandler.Set(secret, historyFile)
 
-	a.RequestHandler.CommandScheduler.CreateScheduler()
-
 	a.InitializeRoutes()
 
+	a.RequestHandler.CommandScheduler.CreateScheduler()
 	go a.RequestHandler.CommandScheduler.RunScheduler()
 }
 
@@ -203,4 +202,6 @@ func main() {
 	a.RequestHandler.Log.Printf("Starting up!")
 
 	a.Run()
+
+	defer a.RequestHandler.CommandScheduler.Shutdown()
 }

@@ -70,7 +70,6 @@ func (handler *RequestHandler) SelectCmd(value string) (Command, error) {
 	}
 
 	for _, cmd := range cmds {
-
 		if strings.Index(cmd.CmdHash, value) == 0 {
 			return cmd, nil
 		}

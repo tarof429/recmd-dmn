@@ -54,16 +54,15 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 
 	handler.Log.Println("Scheduling Command: " + selectedCmd.CmdHash)
 
-	handler.CommandScheduler.Schedule(selectedCmd)
-
-	w.WriteHeader(http.StatusOK)
+	handler.CommandScheduler.QueuedCommands = append(handler.CommandScheduler.QueuedCommands, selectedCmd)
+	handler.CommandScheduler.CommandQueue <- selectedCmd
 
 	completedCommand := <-handler.CommandScheduler.CompletedQueue
+	handler.CommandScheduler.QueuedCommands = handler.CommandScheduler.QueuedCommands[1:]
 
+	handler.Log.Printf("Command received from CompletedQueue: %v\n", completedCommand.CmdHash)
 	handler.UpdateCommandDuration(selectedCmd, completedCommand.Duration)
-
 	out, _ := json.Marshal(completedCommand)
-
 	io.WriteString(w, string(out))
 }
 
