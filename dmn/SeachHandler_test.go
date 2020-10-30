@@ -1,6 +1,10 @@
 package dmn
 
-import "testing"
+import (
+	"log"
+	"os"
+	"testing"
+)
 
 func TestSearchHandler(t *testing.T) {
 
@@ -15,13 +19,16 @@ func TestSearchHandler(t *testing.T) {
 
 	cmdStr := "ls -ltr"
 	cmdDescription := "list files"
+	workingDirectory := "."
 
-	cmd.Set(cmdStr, cmdDescription)
+	cmd.Set(cmdStr, cmdDescription, workingDirectory)
 
 	// Manually populate our history file
 	var requestHandler RequestHandler
 
 	requestHandler.Set(TestSecret, TestHistory)
+	requestHandler.Log = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
+
 	ret := requestHandler.SaveCmd(cmd)
 
 	if ret != true {

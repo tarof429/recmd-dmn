@@ -3,6 +3,7 @@ package dmn
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"time"
@@ -26,11 +27,16 @@ type ScheduledCommand struct {
 	Status     ScheduledStatus `json:"status"`
 }
 
+func getCurrentWorkingDirectory() string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Printf("Unable to obtain current working directory")
+	}
+	return cwd
+}
+
 // RunShellScriptCommandWithExitStatus runs a Command written to a temporary file
 func (sc *ScheduledCommand) RunShellScriptCommandWithExitStatus() int {
-
-	// log.Printf("In RunShellScriptCommand")
-	// log.Printf("Will run: %v\n", sc.CmdString)
 
 	tempFile, err := ioutil.TempFile(os.TempDir(), "recmd-")
 
@@ -47,16 +53,13 @@ func (sc *ScheduledCommand) RunShellScriptCommandWithExitStatus() int {
 	}
 
 	cmd := exec.Command("sh", tempFile.Name())
+	cmd.Dir = sc.WorkingDirectory
 
-	// We may want to make this configurable in the future.
-	// For now, all dmn.Commands will be run from the user's home directory
-	cmd.Dir, err = os.UserHomeDir()
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Unable to obtain home directory: %s\n", err)
+	// Set a default working directory if it's not set
+	if sc.WorkingDirectory == "" {
+		sc.WorkingDirectory = getCurrentWorkingDirectory()
 	}
-
-	//out, err := cmd.Output()
+	cmd.Dir = sc.WorkingDirectory
 
 	combinedOutput, combinedOutputErr := cmd.CombinedOutput()
 

@@ -108,12 +108,13 @@ func TestAddHandler(t *testing.T) {
 
 	func() {
 		// Add command
-		endpoint := "/secret/{secret}/add/command/{command}/description/{description}"
+		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
 		params := make(map[string]string)
 		params["{secret}"] = a.DmnSecret.GetSecret()
 		params["{command}"] = "ls -ltr /"
 		params["{description}"] = "list files"
+		params["{workingDirectory}"] = "."
 
 		endpoint = makeEndpoint(endpoint, params)
 
@@ -167,12 +168,13 @@ func TestSearchHandler(t *testing.T) {
 	clearHistory()
 
 	add := func(cmd string) {
-		endpoint := "/secret/{secret}/add/command/{command}/description/{description}"
+		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
 		params := make(map[string]string)
 		params["{secret}"] = a.DmnSecret.GetSecret()
 		params["{command}"] = cmd
 		params["{description}"] = "Dummy description"
+		params["{workingDirectory}"] = "."
 
 		endpoint = makeEndpoint(endpoint, params)
 
@@ -237,12 +239,13 @@ func TestAdd2Items(t *testing.T) {
 
 	add := func(command, description string) {
 		// Add command
-		endpoint := "/secret/{secret}/add/command/{command}/description/{description}"
+		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
 		params := make(map[string]string)
 		params["{secret}"] = a.DmnSecret.GetSecret()
 		params["{command}"] = command
 		params["{description}"] = description
+		params["{workingDirectory}"] = "."
 
 		endpoint = makeEndpoint(endpoint, params)
 
@@ -272,11 +275,14 @@ func TestSelecthHandler(t *testing.T) {
 
 	add := func() {
 		// Add command
-		endpoint := "/secret/{secret}/add/command/{command}/description/{description}"
+		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
+
 		params := make(map[string]string)
 		params["{secret}"] = a.DmnSecret.GetSecret()
 		params["{command}"] = "uname -srm"
 		params["{description}"] = "Check linux version"
+		params["{workingDirectory}"] = "."
+
 		endpoint = makeEndpoint(endpoint, params)
 
 		req, _ := http.NewRequest("GET", endpoint, nil)
@@ -355,12 +361,13 @@ func TestDeleteHandlerPartial(t *testing.T) {
 	clearHistory()
 
 	add := func(cmd string) {
-		endpoint := "/secret/{secret}/add/command/{command}/description/{description}"
+		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
 		params := make(map[string]string)
 		params["{secret}"] = a.DmnSecret.GetSecret()
 		params["{command}"] = cmd
 		params["{description}"] = "Dummy description"
+		params["{workingDirectory}"] = "."
 
 		endpoint = makeEndpoint(endpoint, params)
 

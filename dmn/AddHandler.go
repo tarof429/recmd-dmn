@@ -36,7 +36,7 @@ func (handler *RequestHandler) HandleAdd(w http.ResponseWriter, r *http.Request)
 	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
 	testCmd := new(Command)
 
-	testCmd.Set(variables.Command, variables.Description)
+	testCmd.Set(variables.Command, variables.Description, variables.WorkingDirectory)
 
 	handler.Log.Printf("Adding command: " + testCmd.CmdHash)
 

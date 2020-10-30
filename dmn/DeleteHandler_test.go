@@ -3,6 +3,7 @@ package dmn
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"os"
 	"testing"
 )
@@ -17,7 +18,7 @@ func TestDeleteHandler(t *testing.T) {
 
 	// Manually populate our history file
 	var cmd Command
-	cmd.Set("ls", "list files")
+	cmd.Set("ls", "list files", ".")
 	var cmds []Command
 	cmds = append(cmds, cmd)
 	mode := int(0644)
@@ -32,6 +33,7 @@ func TestDeleteHandler(t *testing.T) {
 	var requestHandler RequestHandler
 
 	requestHandler.Set(TestSecret, TestHistory)
+	requestHandler.Log = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
 
 	ret, err := requestHandler.DeleteCmd(cmd.CmdHash)
 
