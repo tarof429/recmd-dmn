@@ -1,6 +1,10 @@
 package dmn
 
-import "testing"
+import (
+	"log"
+	"os"
+	"testing"
+)
 
 func TestListHandler(t *testing.T) {
 
@@ -18,6 +22,8 @@ func TestListHandler(t *testing.T) {
 	var requestHandler RequestHandler
 
 	requestHandler.Set(TestSecret, TestHistory)
+	requestHandler.Log = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
+
 	ret := requestHandler.SaveCmd(cmd)
 
 	if ret != true {

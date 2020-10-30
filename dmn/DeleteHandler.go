@@ -12,6 +12,8 @@ import (
 // HandleDelete deletes a Command
 func (handler *RequestHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 
+	handler.Log.Println("Handling delete")
+
 	// Get variables from the request
 	vars := mux.Vars(r)
 	var variables RequestVariable

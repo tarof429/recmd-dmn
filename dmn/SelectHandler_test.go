@@ -1,6 +1,9 @@
 package dmn
 
 import (
+	"fmt"
+	"log"
+	"os"
 	"testing"
 )
 
@@ -21,10 +24,14 @@ func TestSelectHandler(t *testing.T) {
 	cmd.Set(cmdStr, cmdDescription)
 	expectedCommandHash := cmd.CmdHash
 
+	fmt.Println("Looking for " + expectedCommandHash)
+
 	// Manually populate our history file
 	var requestHandler RequestHandler
 
 	requestHandler.Set(TestSecret, TestHistory)
+	requestHandler.Log = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
+
 	ret := requestHandler.SaveCmd(cmd)
 
 	if ret != true {

@@ -1,6 +1,8 @@
 package dmn
 
 import (
+	"log"
+	"os"
 	"testing"
 )
 
@@ -20,6 +22,8 @@ func TestAddHandler(t *testing.T) {
 	var requestHandler RequestHandler
 
 	requestHandler.Set(TestSecret, TestHistory)
+	requestHandler.Log = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
+
 	ret := requestHandler.SaveCmd(cmd)
 
 	if ret != true {
