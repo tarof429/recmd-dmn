@@ -4,12 +4,30 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func (handler *RequestHandler) HandleStatus(w http.ResponseWriter, r *http.Request) {
 
-	handler.Log.Println("Getting status")
+	handler.Log.Println("Handling status")
+
+	// Get variables from the request
+	vars := mux.Vars(r)
+	var variables RequestVariable
+	err := variables.GetVariablesFromRequestVars(vars)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Check if the secret we passed in is valid, otherwise, return error 400
+	if !handler.Secret.Valid(variables.Secret) {
+		handler.Log.Printf("Bad secret! Expected %v but got t%v\n", handler.Secret.GetSecret(), variables.Secret)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	scs := handler.StatusCmd()
 
@@ -20,12 +38,12 @@ func (handler *RequestHandler) HandleStatus(w http.ResponseWriter, r *http.Reque
 	io.WriteString(w, string(out))
 }
 
-func (handler *RequestHandler) StatusCmd() []ScheduledCommand {
+func (handler *RequestHandler) StatusCmd() []Command {
 
-	queue := handler.CommandScheduler.QueuedCommands
+	cmds := handler.CommandScheduler.QueuedCommands
 
-	handler.Log.Println("Total queued: " + strconv.Itoa(len(queue)))
+	//handler.Log.Println("Total queued: " + strconv.Itoa(len(cmds)))
 
-	return queue
+	return cmds
 
 }

@@ -1,75 +1,67 @@
 package dmn
 
 import (
-	"fmt"
-	"os"
 	"time"
 )
 
 // Scheduler manages commands and runs them
 type Scheduler struct {
-	Queue          chan ScheduledCommand
+	CommandQueue   chan Command
 	CompletedQueue chan ScheduledCommand
-	QueuedCommands []ScheduledCommand
+	QueuedCommands []Command
 }
 
 // CreateScheduler creates the channels
 func (scheduler *Scheduler) CreateScheduler() {
-	scheduler.Queue = make(chan ScheduledCommand)
 	scheduler.CompletedQueue = make(chan ScheduledCommand)
-}
-
-// Schedule schdules a command and puts it into the queue
-func (scheduler *Scheduler) Schedule(cmd Command) {
-
-	var sc ScheduledCommand
-
-	sc.CmdHash = cmd.CmdHash
-	sc.CmdString = cmd.CmdString
-	sc.Description = cmd.Description
-	sc.WorkingDirectory = cmd.WorkingDirectory
-	sc.Duration = -1
-	sc.Status = Queued // Set the initial status
-
-	scheduler.QueuedCommands = append(scheduler.QueuedCommands, sc)
-
-	scheduler.Queue <- sc
+	scheduler.CommandQueue = make(chan Command)
 }
 
 // Shutdown closes the channels
 func (scheduler *Scheduler) Shutdown() {
-	close(scheduler.Queue)
 	close(scheduler.CompletedQueue)
+	close(scheduler.CommandQueue)
 }
 
 // RunSchedulerMock runs a mock schedule
 func (scheduler *Scheduler) RunSchedulerMock() {
 
-	for sc := range scheduler.Queue {
-		fmt.Println("Received new command: " + sc.CmdHash)
+	for cmd := range scheduler.CommandQueue {
+		//log.Printf("Scheduling command: %v\n", cmd.CmdHash)
+
+		var sc ScheduledCommand
+		sc.CmdHash = cmd.CmdHash
+
 		time.Sleep(time.Second)
-		fmt.Println("Command completed")
+
+		//log.Printf("Command completed: %v\n", cmd.CmdHash)
+
+		scheduler.CompletedQueue <- sc
 	}
 }
 
-// RunScheduler runs the schedule
+// RunScheduler reads off the CommandQueue and runs Commands
 func (scheduler *Scheduler) RunScheduler() {
+	for cmd := range scheduler.CommandQueue {
+		//log.Printf("Scheduling command: %v\n", cmd.CmdHash)
 
-	for sc := range scheduler.Queue {
+		var sc ScheduledCommand
 
-		scheduler.QueuedCommands[0].Status = Running // Change the status to 'running'
-
+		sc.CmdHash = cmd.CmdHash
+		sc.CmdString = cmd.CmdString
+		sc.Description = cmd.Description
+		sc.WorkingDirectory = cmd.WorkingDirectory
 		sc.Status = Running
 		sc.StartTime = time.Now()
 		sc.RunShellScriptCommandWithExitStatus()
 		sc.EndTime = time.Now()
 		sc.Duration = sc.EndTime.Sub(sc.StartTime)
 		sc.Status = Completed
-		scheduler.QueuedCommands = scheduler.QueuedCommands[1:]
 
-		if sc.ExitStatus != 0 {
-			fmt.Fprintf(os.Stderr, "\nError: Command failed.\n")
-		}
+		// if sc.ExitStatus != 0 {
+		// 	log.Printf("Error: Command %v failed: %v\n", sc.CmdHash, sc.ExitStatus)
+		// }
+
 		scheduler.CompletedQueue <- sc
 	}
 }
