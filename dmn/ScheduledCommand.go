@@ -9,22 +9,13 @@ import (
 	"time"
 )
 
-type ScheduledStatus string
-
-const (
-	Running   ScheduledStatus = "Running"
-	Queued    ScheduledStatus = "Queued"
-	Completed ScheduledStatus = "Completed"
-)
-
 // ScheduledCommand represents a Command that is scheduled to run
 type ScheduledCommand struct {
 	Command
-	Coutput    string          `json:"coutput"`
-	ExitStatus int             `json:"exitStatus"`
-	StartTime  time.Time       `json:"startTime"`
-	EndTime    time.Time       `json:"endTime"`
-	Status     ScheduledStatus `json:"status"`
+	Coutput    string    `json:"coutput"`
+	ExitStatus int       `json:"exitStatus"`
+	StartTime  time.Time `json:"startTime"`
+	EndTime    time.Time `json:"endTime"`
 }
 
 func getCurrentWorkingDirectory() string {
