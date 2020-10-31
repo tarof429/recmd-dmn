@@ -52,16 +52,29 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	handler.Log.Println("Scheduling Command: " + selectedCmd.CmdHash)
-
+	handler.Log.Printf("Scheduling command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+	selectedCmd.Status = Scheduled
 	handler.CommandScheduler.QueuedCommands = append(handler.CommandScheduler.QueuedCommands, selectedCmd)
 	handler.CommandScheduler.CommandQueue <- selectedCmd
 
-	completedCommand := <-handler.CommandScheduler.CompletedQueue
-	handler.CommandScheduler.QueuedCommands = handler.CommandScheduler.QueuedCommands[1:]
+	handler.Log.Printf("Completed command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
 
-	handler.Log.Printf("Command received from CompletedQueue: %v\n", completedCommand.CmdHash)
+	completedCommand := <-handler.CommandScheduler.CompletedQueue
+
+	handler.Log.Printf("Command received from CompletedQueue: %v: %v\n", completedCommand.CmdHash, selectedCmd.Status)
 	handler.UpdateCommandDuration(selectedCmd, completedCommand.Duration)
+
+	for index, cmd := range handler.CommandScheduler.QueuedCommands {
+		if cmd.CmdHash == selectedCmd.CmdHash {
+			handler.Log.Printf("Updating command status%v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+			handler.CommandScheduler.QueuedCommands[index].Status = Completed
+
+			handler.Log.Printf("Vacuuming command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+			handler.CommandScheduler.VacuumQueue <- selectedCmd
+			break
+		}
+	}
+
 	out, _ := json.Marshal(completedCommand)
 	io.WriteString(w, string(out))
 }

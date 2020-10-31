@@ -65,6 +65,7 @@ func (a *App) Initialize(configPath string) {
 
 	a.RequestHandler.CommandScheduler.CreateScheduler()
 	go a.RequestHandler.CommandScheduler.RunScheduler()
+	go a.RequestHandler.CommandScheduler.QueuedCommandsCleanup()
 }
 
 // InitializeConfigPath creates the config directory if it doesn't exist

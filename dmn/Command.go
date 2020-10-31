@@ -7,6 +7,15 @@ import (
 	"time"
 )
 
+type CommandStatus string
+
+const (
+	Idle      CommandStatus = "Idle"
+	Running   CommandStatus = "Running"
+	Completed CommandStatus = "Completed"
+	Scheduled CommandStatus = "Scheduled"
+)
+
 // Command represents a command and optionally a description to document what the command does
 type Command struct {
 	CmdHash          string        `json:"commandHash"`
@@ -14,6 +23,7 @@ type Command struct {
 	Description      string        `json:"description"`
 	Duration         time.Duration `json:"duration"`
 	WorkingDirectory string        `json:"workingDirectory"`
+	Status           CommandStatus `json:"status"`
 }
 
 // Set sets the fields of a new Command
@@ -30,4 +40,5 @@ func (cmd *Command) Set(cmdString string, cmdComment string, workingDirectory st
 	cmd.Description = strings.Trim(cmdComment, "")
 	cmd.WorkingDirectory = strings.Trim(workingDirectory, "")
 	cmd.Duration = -1
+	cmd.Status = Idle
 }
