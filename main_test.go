@@ -12,20 +12,20 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tarof429/recmd-dmn/dmn"
+	dmn "github.com/tarof429/recmd-dmn/dmn"
 )
 
-var a App
+var a dmn.App
 
 func TestMain(m *testing.M) {
 
 	fmt.Println("Called TestMain")
 
-	a = App{}
+	a = dmn.App{}
 
 	clearConfigDir()
 
-	a.Initialize(TestConfigDir)
+	a.Initialize(dmn.TestConfigDir)
 
 	code := m.Run()
 
@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 
 func clearConfigDir() {
 
-	os.RemoveAll(TestConfigDir)
+	os.RemoveAll(dmn.TestConfigDir)
 }
 
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
@@ -67,20 +67,20 @@ func makeEndpoint(endpoint string, params map[string]string) string {
 }
 
 func clearHistory() {
-	os.Remove(filepath.Join(TestConfigDir, "recmd_history.json"))
-	os.Create(filepath.Join(TestConfigDir, "recmd_history.json"))
+	os.Remove(filepath.Join(dmn.TestConfigDir, "recmd_history.json"))
+	os.Create(filepath.Join(dmn.TestConfigDir, "recmd_history.json"))
 }
 
 func TestConfigDirExists(t *testing.T) {
 
 	clearHistory()
 
-	fileInfo, statErr := os.Stat(TestConfigDir)
+	fileInfo, statErr := os.Stat(dmn.TestConfigDir)
 
 	if os.IsNotExist(statErr) {
-		t.Errorf("%v does not exist\n", TestConfigDir)
+		t.Errorf("%v does not exist\n", dmn.TestConfigDir)
 	} else if !fileInfo.IsDir() {
-		t.Errorf("%v is not a directory", TestConfigDir)
+		t.Errorf("%v is not a directory", dmn.TestConfigDir)
 	}
 }
 
