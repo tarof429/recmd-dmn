@@ -19,7 +19,7 @@ const (
 	// TestConfigDir is used for testing
 	TestConfigDir = "testdata"
 
-	DefaultLogFile = "recmd-log"
+	DefaultLogFile = "recmd-dmn.log"
 )
 
 // App represents this API server
