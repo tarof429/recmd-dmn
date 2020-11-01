@@ -36,9 +36,9 @@ type App struct {
 // Initialize initializes the application
 func (a *App) Initialize(configPath string) {
 
-	serverMux := http.NewServeMux()
+	//serverMux := http.NewServeMux()
 
-	a.Server = http.Server{Addr: DefaultServerPort, Handler: serverMux}
+	a.Server = http.Server{Addr: DefaultServerPort, Handler: nil}
 
 	a.CreateLogs()
 
@@ -157,6 +157,7 @@ func (a *App) InitializeRoutes() {
 func (a *App) Run() {
 	log.Printf("Starting server on %v\n", DefaultServerPort)
 
+	//http.ListenAndServe(DefaultServerPort, nil)
 	if err := a.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
@@ -192,6 +193,7 @@ func GetTestConfigPath() string {
 	return filepath.Join(testPath, TestConfigDir)
 }
 
+// Execute is a convenience function that runs the program and quits if there is a signal.
 func Execute() {
 	a := App{}
 
