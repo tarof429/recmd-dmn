@@ -18,8 +18,6 @@ func TestScheduler(t *testing.T) {
 	var scheduler Scheduler
 	scheduler.CreateScheduler()
 
-	defer scheduler.Shutdown() // Shutdown the scheduler to close the channels
-
 	var cmd1 Command
 	cmd1.CmdString = "# This is a command"
 	cmd1.CmdHash = formattedHash(cmd1.CmdString)

@@ -20,12 +20,6 @@ func (scheduler *Scheduler) CreateScheduler() {
 	scheduler.VacuumQueue = make(chan Command)
 }
 
-// Shutdown closes the channels
-func (scheduler *Scheduler) Shutdown() {
-	close(scheduler.CompletedQueue)
-	close(scheduler.CommandQueue)
-}
-
 func (scheduler *Scheduler) QueuedCommandsCleanup() {
 	for selectedCmd := range scheduler.VacuumQueue {
 		for foundIndex, cmd := range scheduler.QueuedCommands {
