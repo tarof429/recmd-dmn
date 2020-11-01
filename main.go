@@ -22,15 +22,23 @@ import (
 
 func main() {
 
-	a := dmn.App{}
+	dmn.Execute()
+	// a := dmn.App{}
 
-	configPath := dmn.GetDefaultConfigPath()
+	// configPath := dmn.GetDefaultConfigPath()
 
-	a.Initialize(configPath)
+	// a.Initialize(configPath)
 
-	a.RequestHandler.Log.Printf("Starting up!")
+	// a.RequestHandler.Log.Printf("Starting up!")
 
-	a.Run()
+	// go func() {
+	// 	a.Run()
+	// }()
 
-	defer a.RequestHandler.CommandScheduler.Shutdown()
+	// stop := make(chan os.Signal, 1)
+	// signal.Notify(stop, os.Interrupt)
+
+	// <-stop
+
+	// a.Shutdown()
 }

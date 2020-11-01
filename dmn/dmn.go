@@ -1,9 +1,11 @@
 package dmn
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 
 	"github.com/gorilla/mux"
@@ -26,12 +28,17 @@ const (
 type App struct {
 	ConfigPath     string
 	Router         *mux.Router
+	Server         http.Server
 	RequestHandler RequestHandler
 	DmnSecret      Secret
 }
 
 // Initialize initializes the application
 func (a *App) Initialize(configPath string) {
+
+	serverMux := http.NewServeMux()
+
+	a.Server = http.Server{Addr: DefaultServerPort, Handler: serverMux}
 
 	a.CreateLogs()
 
@@ -149,7 +156,16 @@ func (a *App) InitializeRoutes() {
 // Run runs the application
 func (a *App) Run() {
 	log.Printf("Starting server on %v\n", DefaultServerPort)
-	log.Fatal(http.ListenAndServe(DefaultServerPort, nil))
+
+	if err := a.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatal(err)
+	}
+}
+
+// Shutdown shuts down the http server
+func (a *App) Shutdown() {
+	log.Printf("Shutting down server")
+	a.Server.Shutdown(context.Background())
 }
 
 // GetDefaultConfigPath gets the default configPath which is ~/.recmd
@@ -174,4 +190,25 @@ func GetTestConfigPath() string {
 	}
 
 	return filepath.Join(testPath, TestConfigDir)
+}
+
+func Execute() {
+	a := App{}
+
+	configPath := GetDefaultConfigPath()
+
+	a.Initialize(configPath)
+
+	a.RequestHandler.Log.Printf("Starting up!")
+
+	go func() {
+		a.Run()
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	<-stop
+
+	a.Shutdown()
 }
