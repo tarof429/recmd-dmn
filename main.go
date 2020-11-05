@@ -23,22 +23,4 @@ import (
 func main() {
 
 	dmn.Execute()
-	// a := dmn.App{}
-
-	// configPath := dmn.GetDefaultConfigPath()
-
-	// a.Initialize(configPath)
-
-	// a.RequestHandler.Log.Printf("Starting up!")
-
-	// go func() {
-	// 	a.Run()
-	// }()
-
-	// stop := make(chan os.Signal, 1)
-	// signal.Notify(stop, os.Interrupt)
-
-	// <-stop
-
-	// a.Shutdown()
 }
