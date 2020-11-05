@@ -37,8 +37,6 @@ type App struct {
 // Initialize initializes the application
 func (a *App) Initialize(configPath string) {
 
-	//serverMux := http.NewServeMux()
-
 	a.Server = http.Server{Addr: DefaultServerPort, Handler: nil}
 
 	a.CreateLogs()
@@ -101,21 +99,6 @@ func (a *App) CreateLogs() {
 		fmt.Println("Using logs file in logs directory")
 		logFile = filepath.Join(logsDir, DefaultLogFile)
 	}
-
-	// fmt.Printf("logsDir is %v\n", logsDir)
-
-	// _, statErr := os.Stat(logsDir)
-
-	// var logFile string
-
-	// if os.IsExist(statErr) == false {
-	// 	fmt.Println("is exist")
-	// 	logFile = filepath.Join(logsDir, DefaultLogFile)
-	// } else {
-	// 	fmt.Println("does not exist")
-	// 	logFile = DefaultLogFile
-	// }
-	// fmt.Println(logFile)
 
 	f, err := os.Create(logFile)
 

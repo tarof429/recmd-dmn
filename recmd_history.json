@@ -1,0 +1,10 @@
+[
+	{
+		"commandHash": "f3aa14f28b8a3a501d8986a24b4ea9",
+		"commandString": "command 0",
+		"description": "Dummy description",
+		"duration": -1,
+		"workingDirectory": ".",
+		"status": "Idle"
+	}
+]
