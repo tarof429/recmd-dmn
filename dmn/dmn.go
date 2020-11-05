@@ -2,6 +2,7 @@ package dmn
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -81,14 +82,46 @@ func (a *App) InitializeConfigPath(configPath string) {
 
 // CreateLogs creates a new log file
 func (a *App) CreateLogs() {
-	f, err := os.Create(DefaultLogFile)
+
+	workingDirectory, err := os.Getwd()
+
+	if err != nil {
+		log.Fatalf("Error when creasting logs: %v\n", err)
+	}
+
+	// here
+	logsDir := filepath.Join(workingDirectory, "logs")
+
+	var logFile string
+
+	if _, err := os.Stat(logsDir); os.IsNotExist(err) {
+		fmt.Println("Using default log file since logs directory does not exist")
+		logFile = DefaultLogFile
+	} else {
+		fmt.Println("Using logs file in logs directory")
+		logFile = filepath.Join(logsDir, DefaultLogFile)
+	}
+
+	// fmt.Printf("logsDir is %v\n", logsDir)
+
+	// _, statErr := os.Stat(logsDir)
+
+	// var logFile string
+
+	// if os.IsExist(statErr) == false {
+	// 	fmt.Println("is exist")
+	// 	logFile = filepath.Join(logsDir, DefaultLogFile)
+	// } else {
+	// 	fmt.Println("does not exist")
+	// 	logFile = DefaultLogFile
+	// }
+	// fmt.Println(logFile)
+
+	f, err := os.Create(logFile)
 
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
-
-	// Not sure how to close it
-	//defer f.Close()
 
 	a.RequestHandler.Log = log.New(f, "", log.LstdFlags|log.Lshortfile)
 
