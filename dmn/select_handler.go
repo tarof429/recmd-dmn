@@ -10,7 +10,7 @@ import (
 )
 
 // HandleSelect selects a Command by its hash
-func (handler *RequestHandler) HandleSelect(w http.ResponseWriter, r *http.Request) {
+func (a *App) HandleSelect(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -25,23 +25,23 @@ func (handler *RequestHandler) HandleSelect(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !handler.Secret.Valid(variables.Secret) {
-		handler.Log.Println("Bad secret!")
+	if !a.RequestHandler.Secret.Valid(variables.Secret) {
+		a.RequestHandler.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the Command, otherwise, if the Command hash cannot be found, return error 400
-	selectedCmd, cerr := handler.SelectCmd(variables.CmdHash)
+	selectedCmd, cerr := a.SelectCmd(variables.CmdHash)
 
 	if cerr != nil {
-		handler.Log.Println("Unable to select Command")
+		a.RequestHandler.Log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if selectedCmd.CmdHash == "" {
-		handler.Log.Println("Invalid hash")
+		a.RequestHandler.Log.Println("Invalid hash")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -59,11 +59,11 @@ func (handler *RequestHandler) HandleSelect(w http.ResponseWriter, r *http.Reque
 }
 
 // SelectCmd returns a Command
-func (handler *RequestHandler) SelectCmd(value string) (Command, error) {
+func (a *App) SelectCmd(value string) (Command, error) {
 
-	handler.Log.Println("Selecting " + value)
+	a.RequestHandler.Log.Println("Selecting " + value)
 
-	cmds, error := handler.History.ReadCmdHistoryFile()
+	cmds, error := a.History.ReadCmdHistoryFile()
 
 	if error != nil {
 		return Command{}, error

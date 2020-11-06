@@ -61,6 +61,46 @@ func (a *App) Initialize(configPath string) {
 	go a.RequestHandler.CommandScheduler.QueuedCommandsCleanup()
 }
 
+// InitHandlerTest deletes and recreates the testdata sandbox directory for testing.
+// Global variables used by the test are also initialized.
+func (a *App) InitHandlerTest() error {
+
+	fmt.Println("Intializing testdata dir...")
+
+	footprint := Footprint{}
+	footprint.TestFootprint()
+
+	a.Footprint.Set(&footprint)
+
+	// Set the secret file
+	a.DmnSecret.Set(footprint.confDirPath)
+	err := a.DmnSecret.WriteSecretToFile()
+	if err != nil {
+		return err
+	}
+	if a.DmnSecret.GetSecret() == "" {
+		return err
+	}
+
+	// Set the log file
+	a.DmnLogFile.Set(footprint.logDirPath)
+	a.DmnLogFile.Create()
+
+	// Set the history file
+	a.History.Set(footprint.confDirPath)
+	a.History.Remove()
+	err = a.History.WriteHistoryToFile()
+	if err != nil {
+		return err
+	}
+
+	a.RequestHandler.Set(a.DmnSecret,
+		a.History, a.DmnLogFile.Log)
+
+	return nil
+
+}
+
 // InitializeConfigPath creates the config directory if it doesn't exist
 func (a *App) InitializeConfigPath(configPath string) {
 
@@ -161,13 +201,13 @@ func (a *App) CreateHistoryFile() HistoryFile {
 
 // InitializeRoutes initializes the routes for this application
 func (a *App) InitializeRoutes() {
-	a.Router.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", a.RequestHandler.HandleDelete)
-	a.Router.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}", a.RequestHandler.HandleAdd)
-	a.Router.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", a.RequestHandler.HandleSelect)
-	a.Router.HandleFunc("/secret/{secret}/search/description/{description}", a.RequestHandler.HandleSearch)
-	a.Router.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", a.RequestHandler.HandleRun)
-	a.Router.HandleFunc("/secret/{secret}/list", a.RequestHandler.HandleList)
-	a.Router.HandleFunc("/secret/{secret}/status", a.RequestHandler.HandleStatus)
+	a.Router.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", a.HandleDelete)
+	a.Router.HandleFunc("/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}", a.HandleAdd)
+	a.Router.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", a.HandleSelect)
+	a.Router.HandleFunc("/secret/{secret}/search/description/{description}", a.HandleSearch)
+	a.Router.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", a.HandleRun)
+	a.Router.HandleFunc("/secret/{secret}/list", a.HandleList)
+	a.Router.HandleFunc("/secret/{secret}/status", a.HandleStatus)
 
 	http.Handle("/", a.Router)
 }

@@ -31,12 +31,7 @@ func TestDeleteHandler(t *testing.T) {
 		t.Error(err)
 	}
 
-	// var requestHandler RequestHandler
-
-	// requestHandler.Set(TestSecret, TestHistory)
-	// requestHandler.Log = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
-
-	ret, err := app.RequestHandler.DeleteCmd(cmd.CmdHash)
+	ret, err := app.DeleteCmd(cmd.CmdHash)
 
 	if err != nil {
 		t.Error(err)

@@ -8,9 +8,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (handler *RequestHandler) HandleStatus(w http.ResponseWriter, r *http.Request) {
+func (a *App) HandleStatus(w http.ResponseWriter, r *http.Request) {
 
-	handler.Log.Println("Handling status")
+	a.RequestHandler.Log.Println("Handling status")
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -23,13 +23,13 @@ func (handler *RequestHandler) HandleStatus(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !handler.Secret.Valid(variables.Secret) {
-		handler.Log.Printf("Bad secret! Expected %v but got t%v\n", handler.Secret.GetSecret(), variables.Secret)
+	if !a.RequestHandler.Secret.Valid(variables.Secret) {
+		a.RequestHandler.Log.Printf("Bad secret! Expected %v but got t%v\n", a.RequestHandler.Secret.GetSecret(), variables.Secret)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	scs := handler.StatusCmd()
+	scs := a.StatusCmd()
 
 	w.WriteHeader(http.StatusOK)
 
@@ -38,9 +38,9 @@ func (handler *RequestHandler) HandleStatus(w http.ResponseWriter, r *http.Reque
 	io.WriteString(w, string(out))
 }
 
-func (handler *RequestHandler) StatusCmd() []Command {
+func (a *App) StatusCmd() []Command {
 
-	cmds := handler.CommandScheduler.QueuedCommands
+	cmds := a.RequestHandler.CommandScheduler.QueuedCommands
 
 	//handler.Log.Println("Total queued: " + strconv.Itoa(len(cmds)))
 

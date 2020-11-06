@@ -24,7 +24,7 @@ func TestAddHandler(t *testing.T) {
 	// //requestHandler.Set(TestSecret, TestHistory)
 	// //requestHandler.Log = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
 
-	ret := app.RequestHandler.SaveCmd(cmd)
+	ret := app.SaveCmd(cmd)
 
 	if ret != true {
 		t.Errorf("Unable to save command")
