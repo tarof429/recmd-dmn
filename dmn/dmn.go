@@ -32,6 +32,9 @@ type App struct {
 	Server         http.Server
 	RequestHandler RequestHandler
 	DmnSecret      Secret
+	Footprint      Footprint
+	DmnLogFile     LogFile
+	History        HistoryFile
 }
 
 // Initialize initializes the application
@@ -45,11 +48,11 @@ func (a *App) Initialize(configPath string) {
 
 	a.InitializeConfigPath(configPath)
 
-	secret := a.CreateSecret()
+	//secret := a.CreateSecret()
 
-	historyFile := a.CreateHistoryFile()
+	//historyFile := a.CreateHistoryFile()
 
-	a.RequestHandler.Set(secret, historyFile)
+	//a.RequestHandler.Set(secret, historyFile)
 
 	a.InitializeRoutes()
 

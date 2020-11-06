@@ -2,9 +2,6 @@ package dmn
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 )
 
 const (
@@ -12,45 +9,50 @@ const (
 )
 
 var (
-	TestPath    string
-	TestDataDir string
-	TestHistory HistoryFile
-	TestSecret  Secret
+	TestApp App
+	// TestPath    string
+	// TestDataDir string
+	// TestLogFile LogFile
+	// TestHistory HistoryFile
+	// TestSecret  Secret
 )
 
 // InitHandlerTest deletes and recreates the testdata sandbox directory for testing.
 // Global variables used by the test are also initialized.
-func InitHandlerTest() error {
+func (TestApp *App) InitHandlerTest() error {
 
 	fmt.Println("Intializing testdata dir...")
 
-	TestPath, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-	}
+	footprint := Footprint{}
+	footprint.TestFootprint()
 
-	TestDataDir = filepath.Join(TestPath, TestataDirPath)
-	os.RemoveAll(TestDataDir)
+	TestApp.Footprint.Set(&footprint)
 
-	mode := os.FileMode(0755)
-	os.Mkdir(TestDataDir, mode)
-
-	// Write the secret
-	TestSecret.Set(TestDataDir)
-	err = TestSecret.WriteSecretToFile()
+	// Set the secret file
+	TestApp.DmnSecret.Set(footprint.confDirPath)
+	err := TestApp.DmnSecret.WriteSecretToFile()
 	if err != nil {
 		return err
 	}
-	if TestSecret.GetSecret() == "" {
+	if TestApp.DmnSecret.GetSecret() == "" {
 		return err
 	}
 
-	// Create a history file
-	TestHistory.Set(TestDataDir)
-	err = TestHistory.WriteHistoryToFile()
+	// Set the log file
+	TestApp.DmnLogFile.Set(footprint.logDirPath)
+	TestApp.DmnLogFile.Create()
+
+	// Set the history file
+	TestApp.History.Set(footprint.confDirPath)
+	TestApp.History.Remove()
+	err = TestApp.History.WriteHistoryToFile()
 	if err != nil {
 		return err
 	}
+
+	TestApp.RequestHandler.Set(TestApp.DmnSecret,
+		TestApp.History, TestApp.DmnLogFile.Log)
+
 	return nil
 
 }

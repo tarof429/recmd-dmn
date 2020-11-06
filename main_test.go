@@ -2,13 +2,11 @@ package main
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -71,375 +69,375 @@ func clearHistory() {
 	os.Create(filepath.Join(dmn.TestConfigDir, "recmd_history.json"))
 }
 
-func TestConfigDirExists(t *testing.T) {
+// func TestConfigDirExists(t *testing.T) {
 
-	clearHistory()
+// 	clearHistory()
 
-	fileInfo, statErr := os.Stat(dmn.TestConfigDir)
+// 	fileInfo, statErr := os.Stat(dmn.TestConfigDir)
 
-	if os.IsNotExist(statErr) {
-		t.Errorf("%v does not exist\n", dmn.TestConfigDir)
-	} else if !fileInfo.IsDir() {
-		t.Errorf("%v is not a directory", dmn.TestConfigDir)
-	}
-}
+// 	if os.IsNotExist(statErr) {
+// 		t.Errorf("%v does not exist\n", dmn.TestConfigDir)
+// 	} else if !fileInfo.IsDir() {
+// 		t.Errorf("%v is not a directory", dmn.TestConfigDir)
+// 	}
+// }
 
-func TestListHandler(t *testing.T) {
+// func TestListHandler(t *testing.T) {
 
-	clearHistory()
+// 	clearHistory()
 
-	endpoint := "/secret/{secret}/list"
+// 	endpoint := "/secret/{secret}/list"
 
-	params := make(map[string]string)
-	params["{secret}"] = a.DmnSecret.GetSecret()
+// 	params := make(map[string]string)
+// 	params["{secret}"] = a.DmnSecret.GetSecret()
 
-	endpoint = makeEndpoint(endpoint, params)
+// 	endpoint = makeEndpoint(endpoint, params)
 
-	req, _ := http.NewRequest("GET", endpoint, nil)
+// 	req, _ := http.NewRequest("GET", endpoint, nil)
 
-	response := executeRequest(req)
+// 	response := executeRequest(req)
 
-	checkResponseCode(t, http.StatusOK, response.Code)
-}
+// 	checkResponseCode(t, http.StatusOK, response.Code)
+// }
 
-func TestAddHandler(t *testing.T) {
+// func TestAddHandler(t *testing.T) {
 
-	clearHistory()
+// 	clearHistory()
 
-	func() {
-		// Add command
-		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
+// 	func() {
+// 		// Add command
+// 		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
-		params["{command}"] = "ls -ltr /"
-		params["{description}"] = "list files"
-		params["{workingDirectory}"] = "."
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
+// 		params["{command}"] = "ls -ltr /"
+// 		params["{description}"] = "list files"
+// 		params["{workingDirectory}"] = "."
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
+// 		checkResponseCode(t, http.StatusOK, response.Code)
 
-		var ret string
+// 		var ret string
 
-		json.Unmarshal(response.Body.Bytes(), &ret)
+// 		json.Unmarshal(response.Body.Bytes(), &ret)
 
-		if ret != "true" {
-			t.Errorf("Unable to save command")
-		}
-	}()
+// 		if ret != "true" {
+// 			t.Errorf("Unable to save command")
+// 		}
+// 	}()
 
-	func() {
+// 	func() {
 
-		// List command
-		endpoint := "/secret/{secret}/list"
+// 		// List command
+// 		endpoint := "/secret/{secret}/list"
 
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
+// 		checkResponseCode(t, http.StatusOK, response.Code)
 
-		var cmds []dmn.Command
+// 		var cmds []dmn.Command
 
-		json.Unmarshal(response.Body.Bytes(), &cmds)
+// 		json.Unmarshal(response.Body.Bytes(), &cmds)
 
-		if len(cmds) != 1 {
-			t.Errorf("No commands found")
-		}
-		if cmds[0].CmdString != "ls -ltr /" {
-			t.Errorf("Command string is invalid")
-		}
-	}()
+// 		if len(cmds) != 1 {
+// 			t.Errorf("No commands found")
+// 		}
+// 		if cmds[0].CmdString != "ls -ltr /" {
+// 			t.Errorf("Command string is invalid")
+// 		}
+// 	}()
 
-}
+// }
 
-func TestSearchHandler(t *testing.T) {
+// func TestSearchHandler(t *testing.T) {
 
-	clearHistory()
+// 	clearHistory()
 
-	add := func(cmd string) {
-		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
+// 	add := func(cmd string) {
+// 		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
-		params["{command}"] = cmd
-		params["{description}"] = "Dummy description"
-		params["{workingDirectory}"] = "."
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
+// 		params["{command}"] = cmd
+// 		params["{description}"] = "Dummy description"
+// 		params["{workingDirectory}"] = "."
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
-	}
+// 		checkResponseCode(t, http.StatusOK, response.Code)
+// 	}
 
-	for i := 0; i < 10; i++ {
-		add("command " + strconv.Itoa(i))
-	}
+// 	for i := 0; i < 10; i++ {
+// 		add("command " + strconv.Itoa(i))
+// 	}
 
-	search := func(description string, expectedCount int) {
-		endpoint := "/secret/{secret}/search/description/{description}"
+// 	search := func(description string, expectedCount int) {
+// 		endpoint := "/secret/{secret}/search/description/{description}"
 
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
-		params["{description}"] = description
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
+// 		params["{description}"] = description
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
+// 		checkResponseCode(t, http.StatusOK, response.Code)
 
-		var cmds []dmn.Command
+// 		var cmds []dmn.Command
 
-		json.Unmarshal(response.Body.Bytes(), &cmds)
+// 		json.Unmarshal(response.Body.Bytes(), &cmds)
 
-		if len(cmds) != expectedCount {
-			t.Errorf("Not enough!")
-		}
+// 		if len(cmds) != expectedCount {
+// 			t.Errorf("Not enough!")
+// 		}
 
-	}
+// 	}
 
-	func() {
-		desc := []string{"Dummy", "d", "DUMMY", "my"}
+// 	func() {
+// 		desc := []string{"Dummy", "d", "DUMMY", "my"}
 
-		for _, d := range desc {
+// 		for _, d := range desc {
 
-			search(d, 10)
-		}
-	}()
+// 			search(d, 10)
+// 		}
+// 	}()
 
-	func() {
-		desc := []string{"X", "12345", "/", "@$!"}
+// 	func() {
+// 		desc := []string{"X", "12345", "/", "@$!"}
 
-		for _, d := range desc {
+// 		for _, d := range desc {
 
-			search(d, 0)
-		}
-	}()
-}
+// 			search(d, 0)
+// 		}
+// 	}()
+// }
 
-func TestAdd2Items(t *testing.T) {
+// func TestAdd2Items(t *testing.T) {
 
-	clearHistory()
+// 	clearHistory()
 
-	add := func(command, description string) {
-		// Add command
-		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
+// 	add := func(command, description string) {
+// 		// Add command
+// 		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
-		params["{command}"] = command
-		params["{description}"] = description
-		params["{workingDirectory}"] = "."
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
+// 		params["{command}"] = command
+// 		params["{description}"] = description
+// 		params["{workingDirectory}"] = "."
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
+// 		checkResponseCode(t, http.StatusOK, response.Code)
 
-		var ret string
+// 		var ret string
 
-		json.Unmarshal(response.Body.Bytes(), &ret)
+// 		json.Unmarshal(response.Body.Bytes(), &ret)
 
-		if ret != "true" {
-			t.Errorf("Unable to save command")
-		}
-	}
+// 		if ret != "true" {
+// 			t.Errorf("Unable to save command")
+// 		}
+// 	}
 
-	add("rm -f ", "delete files")
-	add("df -h", "Check disk space")
+// 	add("rm -f ", "delete files")
+// 	add("df -h", "Check disk space")
 
-}
+// }
 
-func TestSelecthHandler(t *testing.T) {
+// func TestSelecthHandler(t *testing.T) {
 
-	clearHistory()
+// 	clearHistory()
 
-	add := func() {
-		// Add command
-		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
+// 	add := func() {
+// 		// Add command
+// 		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
-		params["{command}"] = "uname -srm"
-		params["{description}"] = "Check linux version"
-		params["{workingDirectory}"] = "."
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
+// 		params["{command}"] = "uname -srm"
+// 		params["{description}"] = "Check linux version"
+// 		params["{workingDirectory}"] = "."
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
+// 		checkResponseCode(t, http.StatusOK, response.Code)
 
-		var ret string
+// 		var ret string
 
-		json.Unmarshal(response.Body.Bytes(), &ret)
-		if ret != "true" {
-			t.Errorf("Unable to save command")
-		}
-	}
+// 		json.Unmarshal(response.Body.Bytes(), &ret)
+// 		if ret != "true" {
+// 			t.Errorf("Unable to save command")
+// 		}
+// 	}
 
-	add()
+// 	add()
 
-	list := func() string {
-		// Use list command to get the Command with the hash we want
-		endpoint := "/secret/{secret}/list"
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+// 	list := func() string {
+// 		// Use list command to get the Command with the hash we want
+// 		endpoint := "/secret/{secret}/list"
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
+// 		checkResponseCode(t, http.StatusOK, response.Code)
 
-		var cmds []dmn.Command
-		json.Unmarshal(response.Body.Bytes(), &cmds)
+// 		var cmds []dmn.Command
+// 		json.Unmarshal(response.Body.Bytes(), &cmds)
 
-		if len(cmds) != 1 {
-			t.Errorf("No commands found")
-		}
+// 		if len(cmds) != 1 {
+// 			t.Errorf("No commands found")
+// 		}
 
-		if cmds[0].CmdString != "uname -srm" {
-			t.Errorf("Command string is invalid")
-		}
+// 		if cmds[0].CmdString != "uname -srm" {
+// 			t.Errorf("Command string is invalid")
+// 		}
 
-		return cmds[0].CmdHash
-	}
+// 		return cmds[0].CmdHash
+// 	}
 
-	expectedHash := list()
+// 	expectedHash := list()
 
-	selectFunc := func(expectedHash string) {
-		endpoint := "/secret/{secret}/select/cmdHash/{cmdHash}"
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
-		params["{cmdHash}"] = expectedHash
+// 	selectFunc := func(expectedHash string) {
+// 		endpoint := "/secret/{secret}/select/cmdHash/{cmdHash}"
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
+// 		params["{cmdHash}"] = expectedHash
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
+// 		checkResponseCode(t, http.StatusOK, response.Code)
 
-		var cmd dmn.Command
-		json.Unmarshal(response.Body.Bytes(), &cmd)
+// 		var cmd dmn.Command
+// 		json.Unmarshal(response.Body.Bytes(), &cmd)
 
-		if cmd.CmdString != "uname -srm" {
-			t.Errorf("Command string is invalid")
-		}
-	}
+// 		if cmd.CmdString != "uname -srm" {
+// 			t.Errorf("Command string is invalid")
+// 		}
+// 	}
 
-	selectFunc(expectedHash)
-}
+// 	selectFunc(expectedHash)
+// }
 
-func TestDeleteHandlerPartial(t *testing.T) {
+// func TestDeleteHandlerPartial(t *testing.T) {
 
-	clearHistory()
+// 	clearHistory()
 
-	add := func(cmd string) {
-		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
+// 	add := func(cmd string) {
+// 		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
-		params["{command}"] = cmd
-		params["{description}"] = "Dummy description"
-		params["{workingDirectory}"] = "."
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
+// 		params["{command}"] = cmd
+// 		params["{description}"] = "Dummy description"
+// 		params["{workingDirectory}"] = "."
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
-	}
+// 		checkResponseCode(t, http.StatusOK, response.Code)
+// 	}
 
-	for i := 0; i < 10; i++ {
-		add("command " + strconv.Itoa(i))
-	}
+// 	for i := 0; i < 10; i++ {
+// 		add("command " + strconv.Itoa(i))
+// 	}
 
-	list := func() []string {
-		// Use list command to get the Command with the hash we want
-		endpoint := "/secret/{secret}/list"
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+// 	list := func() []string {
+// 		// Use list command to get the Command with the hash we want
+// 		endpoint := "/secret/{secret}/list"
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
+// 		checkResponseCode(t, http.StatusOK, response.Code)
 
-		var cmds []dmn.Command
-		json.Unmarshal(response.Body.Bytes(), &cmds)
+// 		var cmds []dmn.Command
+// 		json.Unmarshal(response.Body.Bytes(), &cmds)
 
-		var ret []string
+// 		var ret []string
 
-		for _, cmd := range cmds {
-			ret = append(ret, cmd.CmdHash)
+// 		for _, cmd := range cmds {
+// 			ret = append(ret, cmd.CmdHash)
 
-		}
-		return ret
-	}
+// 		}
+// 		return ret
+// 	}
 
-	founddHashes := list()
+// 	founddHashes := list()
 
-	// Leave the first command alone and delete the others
-	founddHashes = founddHashes[1:]
+// 	// Leave the first command alone and delete the others
+// 	founddHashes = founddHashes[1:]
 
-	if len(founddHashes) != 9 {
-		t.Errorf("We should only have 9 hashes!")
-	}
+// 	if len(founddHashes) != 9 {
+// 		t.Errorf("We should only have 9 hashes!")
+// 	}
 
-	deleteFunc := func(cmdHash string) {
-		endpoint := "/secret/{secret}/delete/cmdHash/{cmdHash}"
+// 	deleteFunc := func(cmdHash string) {
+// 		endpoint := "/secret/{secret}/delete/cmdHash/{cmdHash}"
 
-		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
-		params["{cmdHash}"] = cmdHash
+// 		params := make(map[string]string)
+// 		params["{secret}"] = a.DmnSecret.GetSecret()
+// 		params["{cmdHash}"] = cmdHash
 
-		endpoint = makeEndpoint(endpoint, params)
+// 		endpoint = makeEndpoint(endpoint, params)
 
-		req, _ := http.NewRequest("GET", endpoint, nil)
+// 		req, _ := http.NewRequest("GET", endpoint, nil)
 
-		response := executeRequest(req)
+// 		response := executeRequest(req)
 
-		checkResponseCode(t, http.StatusOK, response.Code)
-	}
+// 		checkResponseCode(t, http.StatusOK, response.Code)
+// 	}
 
-	for _, hash := range founddHashes {
-		deleteFunc(hash)
-	}
+// 	for _, hash := range founddHashes {
+// 		deleteFunc(hash)
+// 	}
 
-	founddHashes = list()
+// 	founddHashes = list()
 
-	if len(founddHashes) != 1 {
-		t.Errorf("Commands not deleted")
-	}
-}
+// 	if len(founddHashes) != 1 {
+// 		t.Errorf("Commands not deleted")
+// 	}
+// }

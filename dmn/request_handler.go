@@ -11,7 +11,8 @@ type RequestHandler struct {
 }
 
 // Set sets global some variables
-func (handler *RequestHandler) Set(secret Secret, history HistoryFile) {
+func (handler *RequestHandler) Set(secret Secret, history HistoryFile, log *log.Logger) {
 	handler.Secret = secret
 	handler.History = history
+	handler.Log = log
 }
