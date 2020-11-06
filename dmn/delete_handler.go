@@ -12,7 +12,7 @@ import (
 // HandleDelete deletes a Command
 func (a *App) HandleDelete(w http.ResponseWriter, r *http.Request) {
 
-	a.RequestHandler.Log.Println("Handling delete")
+	a.DmnLogFile.Log.Println("Handling delete")
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -27,8 +27,8 @@ func (a *App) HandleDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !a.RequestHandler.Secret.Valid(variables.Secret) {
-		a.RequestHandler.Log.Println("Bad secret!")
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -55,11 +55,11 @@ func (a *App) HandleDelete(w http.ResponseWriter, r *http.Request) {
 // because dmn.Commands may look similar.
 func (a *App) DeleteCmd(value string) ([]Command, error) {
 
-	a.RequestHandler.Log.Println("Deleting " + value)
+	a.DmnLogFile.Log.Println("Deleting " + value)
 
 	ret := []Command{}
 
-	cmds, error := a.RequestHandler.History.ReadCmdHistoryFile()
+	cmds, error := a.History.ReadCmdHistoryFile()
 
 	if error != nil {
 		return ret, error
@@ -82,7 +82,7 @@ func (a *App) DeleteCmd(value string) ([]Command, error) {
 		cmds = append(cmds[:foundIndex], cmds[foundIndex+1:]...)
 
 		// Return whether we are able to overwrite the history file
-		a.RequestHandler.History.OverwriteCmdHistoryFile(cmds)
+		a.History.OverwriteCmdHistoryFile(cmds)
 	}
 
 	return ret, nil

@@ -31,8 +31,8 @@ func (a *App) HandleRun(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !a.RequestHandler.Secret.Valid(variables.Secret) {
-		a.RequestHandler.Log.Println("Bad secret!")
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -41,35 +41,35 @@ func (a *App) HandleRun(w http.ResponseWriter, r *http.Request) {
 	selectedCmd, cerr := a.SelectCmd(variables.CmdHash)
 
 	if cerr != nil {
-		a.RequestHandler.Log.Println("Unable to select Command")
+		a.DmnLogFile.Log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if selectedCmd.CmdHash == "" {
-		a.RequestHandler.Log.Println("Invalid hash")
+		a.DmnLogFile.Log.Println("Invalid hash")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	a.RequestHandler.Log.Printf("Scheduling command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+	a.DmnLogFile.Log.Printf("Scheduling command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
 	selectedCmd.Status = Scheduled
 	a.RequestHandler.CommandScheduler.QueuedCommands = append(a.RequestHandler.CommandScheduler.QueuedCommands, selectedCmd)
 	a.RequestHandler.CommandScheduler.CommandQueue <- selectedCmd
 
-	a.RequestHandler.Log.Printf("Completed command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+	a.DmnLogFile.Log.Printf("Completed command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
 
 	completedCommand := <-a.RequestHandler.CommandScheduler.CompletedQueue
 
-	a.RequestHandler.Log.Printf("Command received from CompletedQueue: %v: %v\n", completedCommand.CmdHash, selectedCmd.Status)
+	a.DmnLogFile.Log.Printf("Command received from CompletedQueue: %v: %v\n", completedCommand.CmdHash, selectedCmd.Status)
 	a.UpdateCommandDuration(selectedCmd, completedCommand.Duration)
 
 	for index, cmd := range a.RequestHandler.CommandScheduler.QueuedCommands {
 		if cmd.CmdHash == selectedCmd.CmdHash {
-			a.RequestHandler.Log.Printf("Updating command status%v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+			a.DmnLogFile.Log.Printf("Updating command status%v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
 			a.RequestHandler.CommandScheduler.QueuedCommands[index].Status = Completed
 
-			a.RequestHandler.Log.Printf("Vacuuming command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+			a.DmnLogFile.Log.Printf("Vacuuming command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
 			a.RequestHandler.CommandScheduler.VacuumQueue <- selectedCmd
 			break
 		}
@@ -82,10 +82,10 @@ func (a *App) HandleRun(w http.ResponseWriter, r *http.Request) {
 // UpdateCommandDuration updates a Command with the same hash in the history file
 func (a *App) UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 
-	a.RequestHandler.Log.Printf("Updating %v: ran in %v\n", cmd.CmdHash, duration)
+	a.DmnLogFile.Log.Printf("Updating %v: ran in %v\n", cmd.CmdHash, duration)
 
 	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
-	f, err := os.Open(a.RequestHandler.History.Path)
+	f, err := os.Open(a.History.Path)
 
 	// Immediately close the file since we plan to write to it
 	f.Close()
@@ -105,7 +105,7 @@ func (a *App) UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 
 		updatedData, _ := json.MarshalIndent(cmds, "", "\t")
 
-		error := ioutil.WriteFile(a.RequestHandler.History.Path, updatedData, os.FileMode(mode))
+		error := ioutil.WriteFile(a.History.Path, updatedData, os.FileMode(mode))
 
 		return error == nil
 	}
@@ -116,7 +116,7 @@ func (a *App) UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 	var cmds []Command
 
 	// Read history file
-	data, err := ioutil.ReadFile(a.RequestHandler.History.Path)
+	data, err := ioutil.ReadFile(a.History.Path)
 
 	// An error occured while reading historyFile.
 	if err != nil {
@@ -160,7 +160,7 @@ func (a *App) UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 
 	mode := int(0644)
 
-	error := ioutil.WriteFile(a.RequestHandler.History.Path, updatedData, os.FileMode(mode))
+	error := ioutil.WriteFile(a.History.Path, updatedData, os.FileMode(mode))
 
 	return error == nil
 }

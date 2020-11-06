@@ -27,8 +27,8 @@ func (a *App) HandleAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !a.RequestHandler.Secret.Valid(variables.Secret) {
-		a.RequestHandler.Log.Println("Bad secret!")
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -38,7 +38,7 @@ func (a *App) HandleAdd(w http.ResponseWriter, r *http.Request) {
 
 	testCmd.Set(variables.Command, variables.Description, variables.WorkingDirectory)
 
-	a.RequestHandler.Log.Printf("Adding command: " + testCmd.CmdHash)
+	a.DmnLogFile.Log.Printf("Adding command: " + testCmd.CmdHash)
 
 	if a.SaveCmd(*testCmd) != true {
 		w.WriteHeader(http.StatusBadRequest)

@@ -26,8 +26,8 @@ func (a *App) HandleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !a.RequestHandler.Secret.Valid(variables.Secret) {
-		a.RequestHandler.Log.Println("Bad secret!")
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -36,7 +36,7 @@ func (a *App) HandleSearch(w http.ResponseWriter, r *http.Request) {
 	selectedCmds, cerr := a.SearchCmd(variables.Description)
 
 	if cerr != nil {
-		a.RequestHandler.Log.Println("Unable to select Command")
+		a.DmnLogFile.Log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -56,7 +56,7 @@ func (a *App) HandleSearch(w http.ResponseWriter, r *http.Request) {
 // SearchCmd returns a Command by name
 func (a *App) SearchCmd(description string) ([]Command, error) {
 
-	a.RequestHandler.Log.Println("Searching " + description)
+	a.DmnLogFile.Log.Println("Searching " + description)
 
 	cmds, error := a.History.ReadCmdHistoryFile()
 

@@ -10,7 +10,7 @@ import (
 
 func (a *App) HandleStatus(w http.ResponseWriter, r *http.Request) {
 
-	a.RequestHandler.Log.Println("Handling status")
+	a.DmnLogFile.Log.Println("Handling status")
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -23,8 +23,8 @@ func (a *App) HandleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !a.RequestHandler.Secret.Valid(variables.Secret) {
-		a.RequestHandler.Log.Printf("Bad secret! Expected %v but got t%v\n", a.RequestHandler.Secret.GetSecret(), variables.Secret)
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Printf("Bad secret! Expected %v but got t%v\n", a.Secret.GetSecret(), variables.Secret)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

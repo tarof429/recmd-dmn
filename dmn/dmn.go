@@ -31,7 +31,7 @@ type App struct {
 	Router         *mux.Router
 	Server         http.Server
 	RequestHandler RequestHandler
-	DmnSecret      Secret
+	Secret         Secret
 	Footprint      Footprint
 	DmnLogFile     LogFile
 	History        HistoryFile
@@ -73,12 +73,12 @@ func (a *App) InitHandlerTest() error {
 	a.Footprint.Set(&footprint)
 
 	// Set the secret file
-	a.DmnSecret.Set(footprint.confDirPath)
-	err := a.DmnSecret.WriteSecretToFile()
+	a.Secret.Set(footprint.confDirPath)
+	err := a.Secret.WriteSecretToFile()
 	if err != nil {
 		return err
 	}
-	if a.DmnSecret.GetSecret() == "" {
+	if a.Secret.GetSecret() == "" {
 		return err
 	}
 
@@ -93,9 +93,6 @@ func (a *App) InitHandlerTest() error {
 	if err != nil {
 		return err
 	}
-
-	a.RequestHandler.Set(a.DmnSecret,
-		a.History, a.DmnLogFile.Log)
 
 	return nil
 
@@ -114,10 +111,10 @@ func (a *App) InitializeConfigPath(configPath string) {
 		err := os.Mkdir(a.ConfigPath, os.FileMode(mode))
 
 		if err != nil {
-			log.Fatalf("Error, unable to create ~/.recmd: %v\n", err)
+			a.DmnLogFile.Log.Fatalf("Error, unable to create ~/.recmd: %v\n", err)
 		}
 	} else if !fileInfo.IsDir() {
-		log.Fatalf("Error, ~/.recmd is not a directory")
+		a.DmnLogFile.Log.Fatalf("Error, ~/.recmd is not a directory")
 	}
 }
 
@@ -127,7 +124,7 @@ func (a *App) CreateLogs() {
 	workingDirectory, err := os.Getwd()
 
 	if err != nil {
-		log.Fatalf("Error when creasting logs: %v\n", err)
+		a.DmnLogFile.Log.Fatalf("Error when creasting logs: %v\n", err)
 	}
 
 	// here
@@ -146,35 +143,35 @@ func (a *App) CreateLogs() {
 	f, err := os.Create(logFile)
 
 	if err != nil {
-		log.Fatalf("error opening file: %v", err)
+		a.DmnLogFile.Log.Fatalf("error opening file: %v", err)
 	}
 
-	a.RequestHandler.Log = log.New(f, "", log.LstdFlags|log.Lshortfile)
+	a.DmnLogFile.Log = log.New(f, "", log.LstdFlags|log.Lshortfile)
 
 }
 
 // CreateSecret creates the secret whenever the application starts
 func (a *App) CreateSecret() Secret {
 
-	a.DmnSecret.Set(a.ConfigPath)
+	a.Secret.Set(a.ConfigPath)
 
-	err := a.DmnSecret.WriteSecretToFile()
+	err := a.Secret.WriteSecretToFile()
 
 	if err != nil {
-		log.Printf("Error, unable to create secrets file %v\n", err)
+		a.DmnLogFile.Log.Printf("Error, unable to create secrets file %v\n", err)
 
 	}
 
-	if a.DmnSecret.GetSecret() == "" {
-		log.Printf("Error, secret was an empty string")
+	if a.Secret.GetSecret() == "" {
+		a.DmnLogFile.Log.Printf("Error, secret was an empty string")
 	}
 
-	return a.DmnSecret
+	return a.Secret
 }
 
 // GetSecret just returns the secret
 func (a *App) GetSecret() Secret {
-	return a.DmnSecret
+	return a.Secret
 }
 
 // CreateHistoryFile initializes the historyFile file
@@ -191,7 +188,7 @@ func (a *App) CreateHistoryFile() HistoryFile {
 		err := historyFile.WriteHistoryToFile()
 
 		if err != nil {
-			log.Printf("Error, unable to create historyFile file")
+			a.DmnLogFile.Log.Printf("Error, unable to create historyFile file")
 
 		}
 	}
@@ -214,7 +211,7 @@ func (a *App) InitializeRoutes() {
 
 // Run runs the application
 func (a *App) Run() {
-	log.Printf("Starting server on %v\n", DefaultServerPort)
+	a.DmnLogFile.Log.Printf("Starting server on %v\n", DefaultServerPort)
 
 	//http.ListenAndServe(DefaultServerPort, nil)
 	if err := a.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -224,17 +221,17 @@ func (a *App) Run() {
 
 // Shutdown shuts down the http server
 func (a *App) Shutdown() {
-	log.Printf("Shutting down server")
+	a.DmnLogFile.Log.Printf("Shutting down server")
 	a.Server.Shutdown(context.Background())
 }
 
 // GetDefaultConfigPath gets the default configPath which is ~/.recmd
-func GetDefaultConfigPath() string {
+func (a *App) GetDefaultConfigPath() string {
 
 	homeDir, err := os.UserHomeDir()
 
 	if err != nil {
-		log.Fatalf("Error, unable to obtain home directory path %v\n", err)
+		a.DmnLogFile.Log.Fatalf("Error, unable to obtain home directory path %v\n", err)
 	}
 
 	return filepath.Join(homeDir, DefaultConfigDir)
@@ -256,11 +253,11 @@ func GetTestConfigPath() string {
 func Execute() {
 	a := App{}
 
-	configPath := GetDefaultConfigPath()
+	configPath := a.GetDefaultConfigPath()
 
 	a.Initialize(configPath)
 
-	a.RequestHandler.Log.Printf("Starting up!")
+	a.DmnLogFile.Log.Printf("Starting up!")
 
 	go func() {
 		a.Run()

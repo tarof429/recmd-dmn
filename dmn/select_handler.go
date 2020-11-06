@@ -25,8 +25,8 @@ func (a *App) HandleSelect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !a.RequestHandler.Secret.Valid(variables.Secret) {
-		a.RequestHandler.Log.Println("Bad secret!")
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -35,13 +35,13 @@ func (a *App) HandleSelect(w http.ResponseWriter, r *http.Request) {
 	selectedCmd, cerr := a.SelectCmd(variables.CmdHash)
 
 	if cerr != nil {
-		a.RequestHandler.Log.Println("Unable to select Command")
+		a.DmnLogFile.Log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if selectedCmd.CmdHash == "" {
-		a.RequestHandler.Log.Println("Invalid hash")
+		a.DmnLogFile.Log.Println("Invalid hash")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -61,7 +61,7 @@ func (a *App) HandleSelect(w http.ResponseWriter, r *http.Request) {
 // SelectCmd returns a Command
 func (a *App) SelectCmd(value string) (Command, error) {
 
-	a.RequestHandler.Log.Println("Selecting " + value)
+	a.DmnLogFile.Log.Println("Selecting " + value)
 
 	cmds, error := a.History.ReadCmdHistoryFile()
 
