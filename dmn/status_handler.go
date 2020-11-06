@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -38,11 +39,12 @@ func (a *App) HandleStatus(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
+// StatusCmd returns a list of queued commands
 func (a *App) StatusCmd() []Command {
 
 	cmds := a.RequestHandler.CommandScheduler.QueuedCommands
 
-	//handler.Log.Println("Total queued: " + strconv.Itoa(len(cmds)))
+	a.DmnLogFile.Log.Println("Total queued: " + strconv.Itoa(len(cmds)))
 
 	return cmds
 

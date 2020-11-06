@@ -150,52 +150,6 @@ func (a *App) CreateLogs() {
 
 }
 
-// CreateSecret creates the secret whenever the application starts
-func (a *App) CreateSecret() Secret {
-
-	a.Secret.Set(a.ConfigPath)
-
-	err := a.Secret.WriteSecretToFile()
-
-	if err != nil {
-		a.DmnLogFile.Log.Printf("Error, unable to create secrets file %v\n", err)
-
-	}
-
-	if a.Secret.GetSecret() == "" {
-		a.DmnLogFile.Log.Printf("Error, secret was an empty string")
-	}
-
-	return a.Secret
-}
-
-// GetSecret just returns the secret
-func (a *App) GetSecret() Secret {
-	return a.Secret
-}
-
-// CreateHistoryFile initializes the historyFile file
-func (a *App) CreateHistoryFile() HistoryFile {
-
-	var historyFile HistoryFile
-
-	historyFile.Set(a.ConfigPath)
-
-	_, statErr := os.Stat(historyFile.Path)
-
-	if os.IsNotExist(statErr) {
-
-		err := historyFile.WriteHistoryToFile()
-
-		if err != nil {
-			a.DmnLogFile.Log.Printf("Error, unable to create historyFile file")
-
-		}
-	}
-
-	return historyFile
-}
-
 // InitializeRoutes initializes the routes for this application
 func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/secret/{secret}/delete/cmdHash/{cmdHash}", a.HandleDelete)
@@ -235,18 +189,6 @@ func (a *App) GetDefaultConfigPath() string {
 	}
 
 	return filepath.Join(homeDir, DefaultConfigDir)
-}
-
-// GetTestConfigPath gets the test configPath which is ./testdata
-func GetTestConfigPath() string {
-
-	testPath, err := os.Getwd()
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	return filepath.Join(testPath, TestConfigDir)
 }
 
 // Execute is a convenience function that runs the program and quits if there is a signal.

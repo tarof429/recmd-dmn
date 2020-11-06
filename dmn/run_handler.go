@@ -120,12 +120,12 @@ func (a *App) UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 
 	// An error occured while reading historyFile.
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+		a.DmnLogFile.Log.Printf("An error occured while reading historyFile: %v\n", err)
 		return false
 	}
 
 	if err := json.Unmarshal(data, &cmds); err != nil {
-		fmt.Fprintf(os.Stderr, "JSON unmarshalling failed: %s\n", err)
+		a.DmnLogFile.Log.Printf("JSON unmarshalling failed: %s\n", err)
 		return false
 	}
 
