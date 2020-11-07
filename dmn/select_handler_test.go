@@ -2,14 +2,14 @@ package dmn
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"testing"
 )
 
 func TestSelectHandler(t *testing.T) {
 
-	err := InitHandlerTest()
+	var app App
+
+	err := app.InitalizeTest()
 
 	if err != nil {
 		t.Errorf("Error initializing test %v", err)
@@ -27,20 +27,14 @@ func TestSelectHandler(t *testing.T) {
 
 	fmt.Println("Looking for " + expectedCommandHash)
 
-	// Manually populate our history file
-	var requestHandler RequestHandler
-
-	requestHandler.Set(TestSecret, TestHistory)
-	requestHandler.Log = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
-
-	ret := requestHandler.SaveCmd(cmd)
+	ret := app.SaveCmd(cmd)
 
 	if ret != true {
 		t.Errorf("Unable to save command")
 	}
 
 	// Select the command. The hash is computed from the command string, so this is a well known constant.
-	cmd, err = requestHandler.SelectCmd(expectedCommandHash)
+	cmd, err = app.SelectCmd(expectedCommandHash)
 
 	if err != nil {
 		t.Errorf("Unable to select command")

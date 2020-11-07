@@ -3,14 +3,15 @@ package dmn
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
 )
 
 func TestDeleteHandler(t *testing.T) {
 
-	err := InitHandlerTest()
+	var app App
+
+	err := app.InitalizeTest()
 
 	if err != nil {
 		t.Errorf("Error initializing test %v", err)
@@ -25,17 +26,12 @@ func TestDeleteHandler(t *testing.T) {
 
 	updatedData, _ := json.MarshalIndent(cmds, "", "\t")
 
-	err = ioutil.WriteFile(TestHistory.Path, updatedData, os.FileMode(mode))
+	err = ioutil.WriteFile(app.History.Path, updatedData, os.FileMode(mode))
 	if err != nil {
 		t.Error(err)
 	}
 
-	var requestHandler RequestHandler
-
-	requestHandler.Set(TestSecret, TestHistory)
-	requestHandler.Log = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
-
-	ret, err := requestHandler.DeleteCmd(cmd.CmdHash)
+	ret, err := app.DeleteCmd(cmd.CmdHash)
 
 	if err != nil {
 		t.Error(err)

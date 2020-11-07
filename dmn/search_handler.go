@@ -11,7 +11,7 @@ import (
 
 // HandleSearch searches for a Command by its description. Only lowercase is used to evaulate
 // whether a substring matches.
-func (handler *RequestHandler) HandleSearch(w http.ResponseWriter, r *http.Request) {
+func (a *App) HandleSearch(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -26,17 +26,17 @@ func (handler *RequestHandler) HandleSearch(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !handler.Secret.Valid(variables.Secret) {
-		handler.Log.Println("Bad secret!")
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
-	selectedCmds, cerr := handler.SearchCmd(variables.Description)
+	selectedCmds, cerr := a.SearchCmd(variables.Description)
 
 	if cerr != nil {
-		handler.Log.Println("Unable to select Command")
+		a.DmnLogFile.Log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -54,11 +54,11 @@ func (handler *RequestHandler) HandleSearch(w http.ResponseWriter, r *http.Reque
 }
 
 // SearchCmd returns a Command by name
-func (handler *RequestHandler) SearchCmd(description string) ([]Command, error) {
+func (a *App) SearchCmd(description string) ([]Command, error) {
 
-	handler.Log.Println("Searching " + description)
+	a.DmnLogFile.Log.Println("Searching " + description)
 
-	cmds, error := handler.History.ReadCmdHistoryFile()
+	cmds, error := a.History.ReadCmdHistoryFile()
 
 	ret := []Command{}
 

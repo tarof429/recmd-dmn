@@ -21,6 +21,18 @@ func (h *HistoryFile) Set(path string) {
 	h.Path = filepath.Join(path, recmdHistoryFile)
 }
 
+func (h *HistoryFile) Get() string {
+	return h.Path
+}
+
+func (h *HistoryFile) Remove() {
+	os.Remove(h.Path)
+}
+
+func (h *HistoryFile) Create() {
+	os.Create((h.Path))
+}
+
 // ReadCmdHistoryFile reads historyFile and generates a list of Command structs
 func (h *HistoryFile) ReadCmdHistoryFile() ([]Command, error) {
 

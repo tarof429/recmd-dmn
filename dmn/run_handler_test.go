@@ -1,14 +1,14 @@
 package dmn
 
 import (
-	"log"
-	"os"
 	"testing"
 )
 
 func TestRunHandler(t *testing.T) {
 
-	err := InitHandlerTest()
+	var app App
+
+	err := app.InitalizeTest()
 
 	if err != nil {
 		t.Errorf("Error initializing test %v", err)
@@ -18,25 +18,16 @@ func TestRunHandler(t *testing.T) {
 	var cmd Command
 	cmd.Set("ls", "list files", ".")
 
-	// Manually populate our history file
-	var requestHandler RequestHandler
-
-	requestHandler.Set(TestSecret, TestHistory)
-	requestHandler.Log = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
-
-	ret := requestHandler.SaveCmd(cmd)
+	ret := app.SaveCmd(cmd)
 
 	if ret != true {
 		t.Errorf("Unable to save command")
 	}
 
-	// var sc ScheduledCommand
+	app.RequestHandler.CommandScheduler.CreateScheduler()
 
-	// Doesn't work!
-	// requestHandler.ScheduleCommand(cmd, sc.RunMockCommand)
-
-	// if sc.ExitStatus != 99 {
-	// 	t.Errorf("Command did not successfully run")
-	// }
-
+	go func() {
+		app.RequestHandler.CommandScheduler.CommandQueue <- cmd
+		app.RequestHandler.CommandScheduler.RunSchedulerMock()
+	}()
 }

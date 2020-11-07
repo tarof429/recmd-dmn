@@ -12,7 +12,7 @@ import (
 )
 
 // HandleAdd adds a Command
-func (handler *RequestHandler) HandleAdd(w http.ResponseWriter, r *http.Request) {
+func (a *App) HandleAdd(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -27,8 +27,8 @@ func (handler *RequestHandler) HandleAdd(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !handler.Secret.Valid(variables.Secret) {
-		handler.Log.Println("Bad secret!")
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -38,9 +38,9 @@ func (handler *RequestHandler) HandleAdd(w http.ResponseWriter, r *http.Request)
 
 	testCmd.Set(variables.Command, variables.Description, variables.WorkingDirectory)
 
-	handler.Log.Printf("Adding command: " + testCmd.CmdHash)
+	a.DmnLogFile.Log.Printf("Adding command: " + testCmd.CmdHash)
 
-	if handler.SaveCmd(*testCmd) != true {
+	if a.SaveCmd(*testCmd) != true {
 		w.WriteHeader(http.StatusBadRequest)
 		out, _ := json.Marshal("false")
 		io.WriteString(w, string(out))
@@ -53,10 +53,10 @@ func (handler *RequestHandler) HandleAdd(w http.ResponseWriter, r *http.Request)
 }
 
 // SaveCmd writes a dmn.Command to the history file
-func (handler *RequestHandler) SaveCmd(cmd Command) bool {
+func (a *App) SaveCmd(cmd Command) bool {
 
 	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
-	f, err := os.Open(handler.History.Path)
+	f, err := os.Open(a.History.Path)
 
 	// Immediately close the file since we plan to write to it
 	f.Close()
@@ -72,7 +72,7 @@ func (handler *RequestHandler) SaveCmd(cmd Command) bool {
 
 		updatedData, _ := json.MarshalIndent(cmds, "", "\t")
 
-		error := ioutil.WriteFile(handler.History.Path, updatedData, os.FileMode(mode))
+		error := ioutil.WriteFile(a.History.Path, updatedData, os.FileMode(mode))
 
 		return error == nil
 	}
@@ -83,7 +83,7 @@ func (handler *RequestHandler) SaveCmd(cmd Command) bool {
 	var cmds []Command
 
 	// Read history file
-	data, err := ioutil.ReadFile(handler.History.Path)
+	data, err := ioutil.ReadFile(a.History.Path)
 
 	// An error occured while reading historyFile.
 	if err != nil {
@@ -96,7 +96,7 @@ func (handler *RequestHandler) SaveCmd(cmd Command) bool {
 		cmds = append(cmds, cmd)
 		updatedData, _ := json.MarshalIndent(cmds, "", "\t")
 		mode := int(0644)
-		error := ioutil.WriteFile(handler.History.Path, updatedData, os.FileMode(mode))
+		error := ioutil.WriteFile(a.History.Path, updatedData, os.FileMode(mode))
 		return error == nil
 	}
 	if err := json.Unmarshal(data, &cmds); err != nil {
@@ -125,7 +125,7 @@ func (handler *RequestHandler) SaveCmd(cmd Command) bool {
 
 	mode := int(0644)
 
-	error := ioutil.WriteFile(handler.History.Path, updatedData, os.FileMode(mode))
+	error := ioutil.WriteFile(a.History.Path, updatedData, os.FileMode(mode))
 
 	return error == nil
 

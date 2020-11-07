@@ -1,5 +1,11 @@
 package main
 
+import (
+	"fmt"
+
+	"github.com/tarof429/recmd-dmn/dmn"
+)
+
 /*
 Copyright © 2020 Taro Fukunaga <tarof429@gmail.com>
 
@@ -16,29 +22,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import (
-	dmn "github.com/tarof429/recmd-dmn/dmn"
-)
-
 func main() {
-
+	fmt.Println("Starting recmd-dmn")
 	dmn.Execute()
-	// a := dmn.App{}
-
-	// configPath := dmn.GetDefaultConfigPath()
-
-	// a.Initialize(configPath)
-
-	// a.RequestHandler.Log.Printf("Starting up!")
-
-	// go func() {
-	// 	a.Run()
-	// }()
-
-	// stop := make(chan os.Signal, 1)
-	// signal.Notify(stop, os.Interrupt)
-
-	// <-stop
-
-	// a.Shutdown()
 }

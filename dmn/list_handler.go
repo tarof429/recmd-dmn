@@ -9,9 +9,9 @@ import (
 )
 
 // HandleList lists Commands
-func (handler *RequestHandler) HandleList(w http.ResponseWriter, r *http.Request) {
+func (a *App) HandleList(w http.ResponseWriter, r *http.Request) {
 
-	handler.Log.Printf("Handling list")
+	a.DmnLogFile.Log.Printf("Handling list")
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -26,16 +26,16 @@ func (handler *RequestHandler) HandleList(w http.ResponseWriter, r *http.Request
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !handler.Secret.Valid(variables.Secret) {
-		handler.Log.Printf("Bad secret! Expected %v but got t%v\n", handler.Secret.GetSecret(), variables.Secret)
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Printf("Bad secret! Expected %v but got t%v\n", a.Secret.GetSecret(), variables.Secret)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	cmds, err := handler.ListCmd()
+	cmds, err := a.ListCmd()
 
 	if err != nil {
-		handler.Log.Println("Unable to read history file")
+		a.DmnLogFile.Log.Println("Unable to read history file")
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -51,9 +51,9 @@ func (handler *RequestHandler) HandleList(w http.ResponseWriter, r *http.Request
 }
 
 // ListCmd lists Commands
-func (handler *RequestHandler) ListCmd() ([]Command, error) {
+func (a *App) ListCmd() ([]Command, error) {
 
-	ret, err := handler.History.ReadCmdHistoryFile()
+	ret, err := a.History.ReadCmdHistoryFile()
 
 	return ret, err
 }

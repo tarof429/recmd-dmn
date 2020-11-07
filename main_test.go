@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/gorilla/mux"
 	dmn "github.com/tarof429/recmd-dmn/dmn"
 )
 
@@ -21,11 +21,15 @@ func TestMain(m *testing.M) {
 
 	fmt.Println("Called TestMain")
 
-	a = dmn.App{}
+	a.InitalizeTest()
 
-	clearConfigDir()
+	a.Router = mux.NewRouter()
 
-	a.Initialize(dmn.TestConfigDir)
+	a.InitializeRoutes()
+
+	a.RequestHandler.CommandScheduler.CreateScheduler()
+	go a.RequestHandler.CommandScheduler.RunScheduler()
+	go a.RequestHandler.CommandScheduler.QueuedCommandsCleanup()
 
 	code := m.Run()
 
@@ -67,51 +71,35 @@ func makeEndpoint(endpoint string, params map[string]string) string {
 }
 
 func clearHistory() {
-	os.Remove(filepath.Join(dmn.TestConfigDir, "recmd_history.json"))
-	os.Create(filepath.Join(dmn.TestConfigDir, "recmd_history.json"))
+	a.History.Remove()
+	a.History.Create()
+	// os.Remove(filepath.Join(dmn.TestConfigDir, "recmd_history.json"))
+	// os.Create(filepath.Join(dmn.TestConfigDir, "recmd_history.json"))
 }
 
-func TestConfigDirExists(t *testing.T) {
+// func TestConfigDirExists(t *testing.T) {
 
-	clearHistory()
+// 	clearHistory()
 
-	fileInfo, statErr := os.Stat(dmn.TestConfigDir)
+// 	fileInfo, statErr := os.Stat(dmn.TestConfigDir)
 
-	if os.IsNotExist(statErr) {
-		t.Errorf("%v does not exist\n", dmn.TestConfigDir)
-	} else if !fileInfo.IsDir() {
-		t.Errorf("%v is not a directory", dmn.TestConfigDir)
-	}
-}
+// 	if os.IsNotExist(statErr) {
+// 		t.Errorf("%v does not exist\n", dmn.TestConfigDir)
+// 	} else if !fileInfo.IsDir() {
+// 		t.Errorf("%v is not a directory", dmn.TestConfigDir)
+// 	}
+// }
 
 func TestListHandler(t *testing.T) {
 
 	clearHistory()
 
-	endpoint := "/secret/{secret}/list"
-
-	params := make(map[string]string)
-	params["{secret}"] = a.DmnSecret.GetSecret()
-
-	endpoint = makeEndpoint(endpoint, params)
-
-	req, _ := http.NewRequest("GET", endpoint, nil)
-
-	response := executeRequest(req)
-
-	checkResponseCode(t, http.StatusOK, response.Code)
-}
-
-func TestAddHandler(t *testing.T) {
-
-	clearHistory()
-
+	// Add
 	func() {
-		// Add command
 		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
 		params["{command}"] = "ls -ltr /"
 		params["{description}"] = "list files"
 		params["{workingDirectory}"] = "."
@@ -133,13 +121,62 @@ func TestAddHandler(t *testing.T) {
 		}
 	}()
 
+	// list
 	func() {
-
-		// List command
 		endpoint := "/secret/{secret}/list"
 
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
+
+		endpoint = makeEndpoint(endpoint, params)
+
+		req, _ := http.NewRequest("GET", endpoint, nil)
+
+		response := executeRequest(req)
+
+		checkResponseCode(t, http.StatusOK, response.Code)
+	}()
+}
+
+func TestAddHandler(t *testing.T) {
+
+	clearHistory()
+
+	// Add
+	func() {
+
+		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
+
+		params := make(map[string]string)
+		params["{secret}"] = a.Secret.GetSecret()
+		params["{command}"] = "ls -ltr /"
+		params["{description}"] = "list files"
+		params["{workingDirectory}"] = "."
+
+		endpoint = makeEndpoint(endpoint, params)
+
+		req, _ := http.NewRequest("GET", endpoint, nil)
+
+		response := executeRequest(req)
+
+		checkResponseCode(t, http.StatusOK, response.Code)
+
+		var ret string
+
+		json.Unmarshal(response.Body.Bytes(), &ret)
+
+		if ret != "true" {
+			t.Errorf("Unable to save command")
+		}
+	}()
+
+	// List
+	func() {
+
+		endpoint := "/secret/{secret}/list"
+
+		params := make(map[string]string)
+		params["{secret}"] = a.Secret.GetSecret()
 
 		endpoint = makeEndpoint(endpoint, params)
 
@@ -171,7 +208,7 @@ func TestSearchHandler(t *testing.T) {
 		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
 		params["{command}"] = cmd
 		params["{description}"] = "Dummy description"
 		params["{workingDirectory}"] = "."
@@ -193,7 +230,7 @@ func TestSearchHandler(t *testing.T) {
 		endpoint := "/secret/{secret}/search/description/{description}"
 
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
 		params["{description}"] = description
 
 		endpoint = makeEndpoint(endpoint, params)
@@ -242,7 +279,7 @@ func TestAdd2Items(t *testing.T) {
 		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
 		params["{command}"] = command
 		params["{description}"] = description
 		params["{workingDirectory}"] = "."
@@ -278,7 +315,7 @@ func TestSelecthHandler(t *testing.T) {
 		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
 		params["{command}"] = "uname -srm"
 		params["{description}"] = "Check linux version"
 		params["{workingDirectory}"] = "."
@@ -305,7 +342,7 @@ func TestSelecthHandler(t *testing.T) {
 		// Use list command to get the Command with the hash we want
 		endpoint := "/secret/{secret}/list"
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
 
 		endpoint = makeEndpoint(endpoint, params)
 
@@ -331,10 +368,12 @@ func TestSelecthHandler(t *testing.T) {
 
 	expectedHash := list()
 
+	fmt.Printf("Expected hash: %v\n", expectedHash)
+
 	selectFunc := func(expectedHash string) {
 		endpoint := "/secret/{secret}/select/cmdHash/{cmdHash}"
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
 		params["{cmdHash}"] = expectedHash
 
 		endpoint = makeEndpoint(endpoint, params)
@@ -364,7 +403,7 @@ func TestDeleteHandlerPartial(t *testing.T) {
 		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
 
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
 		params["{command}"] = cmd
 		params["{description}"] = "Dummy description"
 		params["{workingDirectory}"] = "."
@@ -386,7 +425,7 @@ func TestDeleteHandlerPartial(t *testing.T) {
 		// Use list command to get the Command with the hash we want
 		endpoint := "/secret/{secret}/list"
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
 
 		endpoint = makeEndpoint(endpoint, params)
 
@@ -421,7 +460,7 @@ func TestDeleteHandlerPartial(t *testing.T) {
 		endpoint := "/secret/{secret}/delete/cmdHash/{cmdHash}"
 
 		params := make(map[string]string)
-		params["{secret}"] = a.DmnSecret.GetSecret()
+		params["{secret}"] = a.Secret.GetSecret()
 		params["{cmdHash}"] = cmdHash
 
 		endpoint = makeEndpoint(endpoint, params)

@@ -16,7 +16,7 @@ import (
 // whether it was run successfully or not, or whether there was an issue in writing the duration.
 // This should be improved; however, the client still receives the ScedheduledCommand struct
 // so any error messages will be there.
-func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request) {
+func (a *App) HandleRun(w http.ResponseWriter, r *http.Request) {
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -31,46 +31,46 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !handler.Secret.Valid(variables.Secret) {
-		handler.Log.Println("Bad secret!")
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
-	selectedCmd, cerr := handler.SelectCmd(variables.CmdHash)
+	selectedCmd, cerr := a.SelectCmd(variables.CmdHash)
 
 	if cerr != nil {
-		handler.Log.Println("Unable to select Command")
+		a.DmnLogFile.Log.Println("Unable to select Command")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if selectedCmd.CmdHash == "" {
-		handler.Log.Println("Invalid hash")
+		a.DmnLogFile.Log.Println("Invalid hash")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	handler.Log.Printf("Scheduling command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+	a.DmnLogFile.Log.Printf("Scheduling command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
 	selectedCmd.Status = Scheduled
-	handler.CommandScheduler.QueuedCommands = append(handler.CommandScheduler.QueuedCommands, selectedCmd)
-	handler.CommandScheduler.CommandQueue <- selectedCmd
+	a.RequestHandler.CommandScheduler.QueuedCommands = append(a.RequestHandler.CommandScheduler.QueuedCommands, selectedCmd)
+	a.RequestHandler.CommandScheduler.CommandQueue <- selectedCmd
 
-	handler.Log.Printf("Completed command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+	a.DmnLogFile.Log.Printf("Completed command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
 
-	completedCommand := <-handler.CommandScheduler.CompletedQueue
+	completedCommand := <-a.RequestHandler.CommandScheduler.CompletedQueue
 
-	handler.Log.Printf("Command received from CompletedQueue: %v: %v\n", completedCommand.CmdHash, selectedCmd.Status)
-	handler.UpdateCommandDuration(selectedCmd, completedCommand.Duration)
+	a.DmnLogFile.Log.Printf("Command received from CompletedQueue: %v: %v\n", completedCommand.CmdHash, selectedCmd.Status)
+	a.UpdateCommandDuration(selectedCmd, completedCommand.Duration)
 
-	for index, cmd := range handler.CommandScheduler.QueuedCommands {
+	for index, cmd := range a.RequestHandler.CommandScheduler.QueuedCommands {
 		if cmd.CmdHash == selectedCmd.CmdHash {
-			handler.Log.Printf("Updating command status%v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
-			handler.CommandScheduler.QueuedCommands[index].Status = Completed
+			a.DmnLogFile.Log.Printf("Updating command status%v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+			a.RequestHandler.CommandScheduler.QueuedCommands[index].Status = Completed
 
-			handler.Log.Printf("Vacuuming command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
-			handler.CommandScheduler.VacuumQueue <- selectedCmd
+			a.DmnLogFile.Log.Printf("Vacuuming command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
+			a.RequestHandler.CommandScheduler.VacuumQueue <- selectedCmd
 			break
 		}
 	}
@@ -80,12 +80,12 @@ func (handler *RequestHandler) HandleRun(w http.ResponseWriter, r *http.Request)
 }
 
 // UpdateCommandDuration updates a Command with the same hash in the history file
-func (handler *RequestHandler) UpdateCommandDuration(cmd Command, duration time.Duration) bool {
+func (a *App) UpdateCommandDuration(cmd Command, duration time.Duration) bool {
 
-	handler.Log.Printf("Updating %v: ran in %v\n", cmd.CmdHash, duration)
+	a.DmnLogFile.Log.Printf("Updating %v: ran in %v\n", cmd.CmdHash, duration)
 
 	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
-	f, err := os.Open(handler.History.Path)
+	f, err := os.Open(a.History.Path)
 
 	// Immediately close the file since we plan to write to it
 	f.Close()
@@ -105,7 +105,7 @@ func (handler *RequestHandler) UpdateCommandDuration(cmd Command, duration time.
 
 		updatedData, _ := json.MarshalIndent(cmds, "", "\t")
 
-		error := ioutil.WriteFile(handler.History.Path, updatedData, os.FileMode(mode))
+		error := ioutil.WriteFile(a.History.Path, updatedData, os.FileMode(mode))
 
 		return error == nil
 	}
@@ -116,16 +116,16 @@ func (handler *RequestHandler) UpdateCommandDuration(cmd Command, duration time.
 	var cmds []Command
 
 	// Read history file
-	data, err := ioutil.ReadFile(handler.History.Path)
+	data, err := ioutil.ReadFile(a.History.Path)
 
 	// An error occured while reading historyFile.
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+		a.DmnLogFile.Log.Printf("An error occured while reading historyFile: %v\n", err)
 		return false
 	}
 
 	if err := json.Unmarshal(data, &cmds); err != nil {
-		fmt.Fprintf(os.Stderr, "JSON unmarshalling failed: %s\n", err)
+		a.DmnLogFile.Log.Printf("JSON unmarshalling failed: %s\n", err)
 		return false
 	}
 
@@ -160,7 +160,7 @@ func (handler *RequestHandler) UpdateCommandDuration(cmd Command, duration time.
 
 	mode := int(0644)
 
-	error := ioutil.WriteFile(handler.History.Path, updatedData, os.FileMode(mode))
+	error := ioutil.WriteFile(a.History.Path, updatedData, os.FileMode(mode))
 
 	return error == nil
 }

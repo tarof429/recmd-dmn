@@ -10,9 +10,9 @@ import (
 )
 
 // HandleDelete deletes a Command
-func (handler *RequestHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
+func (a *App) HandleDelete(w http.ResponseWriter, r *http.Request) {
 
-	handler.Log.Println("Handling delete")
+	a.DmnLogFile.Log.Println("Handling delete")
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -27,14 +27,14 @@ func (handler *RequestHandler) HandleDelete(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check if the secret we passed in is valid, otherwise, return error 400
-	if !handler.Secret.Valid(variables.Secret) {
-		handler.Log.Println("Bad secret!")
+	if !a.Secret.Valid(variables.Secret) {
+		a.DmnLogFile.Log.Println("Bad secret!")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
-	selectedCmd, err := handler.DeleteCmd(variables.CmdHash)
+	selectedCmd, err := a.DeleteCmd(variables.CmdHash)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -53,13 +53,13 @@ func (handler *RequestHandler) HandleDelete(w http.ResponseWriter, r *http.Reque
 
 // DeleteCmd deletes a dmn.Command. It's best to pass in the dmn.CommandHash
 // because dmn.Commands may look similar.
-func (handler *RequestHandler) DeleteCmd(value string) ([]Command, error) {
+func (a *App) DeleteCmd(value string) ([]Command, error) {
 
-	handler.Log.Println("Deleting " + value)
+	a.DmnLogFile.Log.Println("Deleting " + value)
 
 	ret := []Command{}
 
-	cmds, error := handler.History.ReadCmdHistoryFile()
+	cmds, error := a.History.ReadCmdHistoryFile()
 
 	if error != nil {
 		return ret, error
@@ -82,7 +82,7 @@ func (handler *RequestHandler) DeleteCmd(value string) ([]Command, error) {
 		cmds = append(cmds[:foundIndex], cmds[foundIndex+1:]...)
 
 		// Return whether we are able to overwrite the history file
-		handler.History.OverwriteCmdHistoryFile(cmds)
+		a.History.OverwriteCmdHistoryFile(cmds)
 	}
 
 	return ret, nil
