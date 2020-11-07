@@ -9,9 +9,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (a *App) HandleStatus(w http.ResponseWriter, r *http.Request) {
+// HandleQueue lists the commands in the queue
+func (a *App) HandleQueue(w http.ResponseWriter, r *http.Request) {
 
-	a.DmnLogFile.Log.Println("Handling status")
+	a.DmnLogFile.Log.Println("Handling queue")
 
 	// Get variables from the request
 	vars := mux.Vars(r)
@@ -30,7 +31,7 @@ func (a *App) HandleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scs := a.StatusCmd()
+	scs := a.QueueCmd()
 
 	w.WriteHeader(http.StatusOK)
 
@@ -39,8 +40,8 @@ func (a *App) HandleStatus(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(out))
 }
 
-// StatusCmd returns a list of queued commands
-func (a *App) StatusCmd() []Command {
+// QueueCmd returns a list of queued commands
+func (a *App) QueueCmd() []Command {
 
 	cmds := a.RequestHandler.CommandScheduler.QueuedCommands
 
