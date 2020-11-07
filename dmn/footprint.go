@@ -1,6 +1,7 @@
 package dmn
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -37,7 +38,7 @@ func (f *Footprint) TestFootprint() {
 		err := os.Mkdir(testdataDir, os.FileMode(mode))
 
 		if err != nil {
-			log.Fatalf("Error, unable to create testdata: %v\n", err)
+			log.Fatalf("Error: unable to create testdata: %v\n", err)
 		}
 	}
 
@@ -49,6 +50,9 @@ func (f *Footprint) TestFootprint() {
 // DefaultFootprint creates a footprint for production. There are
 // separate directories for configuration, binary files, and logs.
 func (f *Footprint) DefaultFootprint() {
+	fmt.Println("Creating footprint")
+	log.Printf("Creating footprint")
+
 	wd, err := os.Getwd()
 
 	if err != nil {
@@ -61,13 +65,23 @@ func (f *Footprint) DefaultFootprint() {
 	f.binDirPath = filepath.Join(parentDir, "bin")
 	f.logDirPath = filepath.Join(parentDir, "logs")
 
-	for _, dir := range []string{f.confDirPath, f.binDirPath, f.logDirPath} {
+	//os.Mkdir(f.confDirPath, 0755)
+
+	// f.confDirPath = filepath.Join(wd, "conf")
+	// f.binDirPath = filepath.Join(wd, "bin")
+	// f.logDirPath = filepath.Join(wd, "logs")
+
+	for _, dir := range []string{f.confDirPath, f.logDirPath} {
 		if os.IsNotExist(err) {
+			fmt.Println("Skipping...")
+
+		} else {
+			fmt.Printf("Creating %v\n", dir)
 			mode := int(0755)
 			err := os.Mkdir(dir, os.FileMode(mode))
 
 			if err != nil {
-				log.Fatalf("Error, unable to create dir: %v\n", dir)
+				log.Printf("Warning: unable to create dir: %v\n", err)
 			}
 		}
 	}

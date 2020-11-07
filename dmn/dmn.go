@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"path/filepath"
 
 	"github.com/gorilla/mux"
@@ -17,7 +16,7 @@ const (
 	DefaultServerPort = ":8999"
 
 	// DefaultConfigDir is a directory containing configuration and the Command history file
-	DefaultConfigDir = ".recmd"
+	//DefaultConfigDir = ".recmd"
 
 	// TestConfigDir is used for testing
 	TestConfigDir = "testdata"
@@ -61,9 +60,43 @@ func (a *App) Initialize(configPath string) {
 	go a.RequestHandler.CommandScheduler.QueuedCommandsCleanup()
 }
 
-// InitHandlerTest deletes and recreates the testdata sandbox directory for testing.
+func (a *App) InitializeProd() {
+	a.DmnLogFile.Log.Printf("Initializing...")
+	//fmt.Println("Intializing...")
+
+	// footprint := Footprint{}
+	// footprint.DefaultFootprint()
+
+	// a.Footprint.Set(&footprint)
+
+	// // Set the secret file
+	// a.Secret.Set(footprint.confDirPath)
+	// a.Secret.WriteSecretToFile()
+
+	// // Set the log file
+	// a.DmnLogFile.Set(footprint.logDirPath)
+	// a.DmnLogFile.Create()
+
+	// // Set the history file
+	// a.History.Set(footprint.confDirPath)
+	// a.History.Remove()
+	// a.History.WriteHistoryToFile()
+
+	// // Server code
+	// a.Server = http.Server{Addr: DefaultServerPort, Handler: nil}
+
+	// a.Router = mux.NewRouter()
+
+	// a.InitializeRoutes()
+
+	// a.RequestHandler.CommandScheduler.CreateScheduler()
+	// go a.RequestHandler.CommandScheduler.RunScheduler()
+	// go a.RequestHandler.CommandScheduler.QueuedCommandsCleanup()
+}
+
+// InitalizeTest deletes and recreates the testdata sandbox directory for testing.
 // Global variables used by the test are also initialized.
-func (a *App) InitHandlerTest() error {
+func (a *App) InitalizeTest() error {
 
 	fmt.Println("Intializing testdata dir...")
 
@@ -179,36 +212,23 @@ func (a *App) Shutdown() {
 	a.Server.Shutdown(context.Background())
 }
 
-// GetDefaultConfigPath gets the default configPath which is ~/.recmd
-func (a *App) GetDefaultConfigPath() string {
-
-	homeDir, err := os.UserHomeDir()
-
-	if err != nil {
-		a.DmnLogFile.Log.Fatalf("Error, unable to obtain home directory path %v\n", err)
-	}
-
-	return filepath.Join(homeDir, DefaultConfigDir)
-}
-
 // Execute is a convenience function that runs the program and quits if there is a signal.
 func Execute() {
-	a := App{}
 
-	configPath := a.GetDefaultConfigPath()
+	//a := App{}
 
-	a.Initialize(configPath)
+	//a.InitializeProd()
 
-	a.DmnLogFile.Log.Printf("Starting up!")
+	// a.DmnLogFile.Log.Printf("Starting up!")
 
-	go func() {
-		a.Run()
-	}()
+	// go func() {
+	// 	a.Run()
+	// }()
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+	// stop := make(chan os.Signal, 1)
+	// signal.Notify(stop, os.Interrupt)
 
-	<-stop
+	// <-stop
 
-	a.Shutdown()
+	// a.Shutdown()
 }

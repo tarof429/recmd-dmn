@@ -29,6 +29,10 @@ func (h *HistoryFile) Remove() {
 	os.Remove(h.Path)
 }
 
+func (h *HistoryFile) Create() {
+	os.Create((h.Path))
+}
+
 // ReadCmdHistoryFile reads historyFile and generates a list of Command structs
 func (h *HistoryFile) ReadCmdHistoryFile() ([]Command, error) {
 

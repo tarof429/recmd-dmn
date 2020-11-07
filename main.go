@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 /*
 Copyright © 2020 Taro Fukunaga <tarof429@gmail.com>
 
@@ -16,11 +18,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import (
-	dmn "github.com/tarof429/recmd-dmn/dmn"
-)
-
 func main() {
-
-	dmn.Execute()
+	fmt.Println("Starting recmd-dmn")
+	// dmn.Execute()
 }

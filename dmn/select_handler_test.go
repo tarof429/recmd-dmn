@@ -9,7 +9,7 @@ func TestSelectHandler(t *testing.T) {
 
 	var app App
 
-	err := app.InitHandlerTest()
+	err := app.InitalizeTest()
 
 	if err != nil {
 		t.Errorf("Error initializing test %v", err)

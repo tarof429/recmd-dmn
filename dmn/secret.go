@@ -66,7 +66,8 @@ func (secret *Secret) GetSecret() string {
 	secretData, err := ioutil.ReadFile(secret.Path)
 
 	if err != nil {
-		log.Fatalf("Error, unable to read secret from file %v\n", err)
+		//log.Fatalf("In secret.GetSecret(): unable to read secret from file %v\n", err)
+      log.Println("Oops, can't read secret")
 	}
 
 	if len(secretData) != secretLength {
