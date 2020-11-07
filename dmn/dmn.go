@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 
 	"github.com/gorilla/mux"
@@ -36,62 +37,37 @@ type App struct {
 	History        HistoryFile
 }
 
-// Initialize initializes the application
-func (a *App) Initialize(configPath string) {
+func (a *App) InitializeProd() {
 
+	footprint := Footprint{}
+	footprint.DefaultFootprint()
+
+	a.Footprint.Set(&footprint)
+
+	// Set the secret file
+	a.Secret.Set(footprint.confDirPath)
+	a.Secret.WriteSecretToFile()
+
+	// Set the log file
+	a.DmnLogFile.Set(footprint.logDirPath)
+	a.DmnLogFile.Create()
+
+	// Set the history file
+	a.History.Set(footprint.confDirPath)
+	a.History.WriteHistoryToFile()
+
+	a.DmnLogFile.Log.Printf("Initializing...")
+
+	// Server code
 	a.Server = http.Server{Addr: DefaultServerPort, Handler: nil}
 
-	a.CreateLogs()
-
 	a.Router = mux.NewRouter()
-
-	a.InitializeConfigPath(configPath)
-
-	//secret := a.CreateSecret()
-
-	//historyFile := a.CreateHistoryFile()
-
-	//a.RequestHandler.Set(secret, historyFile)
 
 	a.InitializeRoutes()
 
 	a.RequestHandler.CommandScheduler.CreateScheduler()
 	go a.RequestHandler.CommandScheduler.RunScheduler()
 	go a.RequestHandler.CommandScheduler.QueuedCommandsCleanup()
-}
-
-func (a *App) InitializeProd() {
-	a.DmnLogFile.Log.Printf("Initializing...")
-	//fmt.Println("Intializing...")
-
-	// footprint := Footprint{}
-	// footprint.DefaultFootprint()
-
-	// a.Footprint.Set(&footprint)
-
-	// // Set the secret file
-	// a.Secret.Set(footprint.confDirPath)
-	// a.Secret.WriteSecretToFile()
-
-	// // Set the log file
-	// a.DmnLogFile.Set(footprint.logDirPath)
-	// a.DmnLogFile.Create()
-
-	// // Set the history file
-	// a.History.Set(footprint.confDirPath)
-	// a.History.Remove()
-	// a.History.WriteHistoryToFile()
-
-	// // Server code
-	// a.Server = http.Server{Addr: DefaultServerPort, Handler: nil}
-
-	// a.Router = mux.NewRouter()
-
-	// a.InitializeRoutes()
-
-	// a.RequestHandler.CommandScheduler.CreateScheduler()
-	// go a.RequestHandler.CommandScheduler.RunScheduler()
-	// go a.RequestHandler.CommandScheduler.QueuedCommandsCleanup()
 }
 
 // InitalizeTest deletes and recreates the testdata sandbox directory for testing.
@@ -157,7 +133,7 @@ func (a *App) CreateLogs() {
 	workingDirectory, err := os.Getwd()
 
 	if err != nil {
-		a.DmnLogFile.Log.Fatalf("Error when creasting logs: %v\n", err)
+		a.DmnLogFile.Log.Fatalf("Error when creating logs: %v\n", err)
 	}
 
 	// here
@@ -215,20 +191,20 @@ func (a *App) Shutdown() {
 // Execute is a convenience function that runs the program and quits if there is a signal.
 func Execute() {
 
-	//a := App{}
+	var a App
 
-	//a.InitializeProd()
+	a.InitializeProd()
 
-	// a.DmnLogFile.Log.Printf("Starting up!")
+	a.DmnLogFile.Log.Printf("Starting up...")
 
-	// go func() {
-	// 	a.Run()
-	// }()
+	go func() {
+		a.Run()
+	}()
 
-	// stop := make(chan os.Signal, 1)
-	// signal.Notify(stop, os.Interrupt)
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
 
-	// <-stop
+	<-stop
 
-	// a.Shutdown()
+	a.Shutdown()
 }

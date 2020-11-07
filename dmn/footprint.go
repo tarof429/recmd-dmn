@@ -59,17 +59,17 @@ func (f *Footprint) DefaultFootprint() {
 		log.Println(err)
 	}
 
-	parentDir := filepath.Dir(wd)
+	// parentDir := filepath.Dir(wd)
 
-	f.confDirPath = filepath.Join(parentDir, "conf")
-	f.binDirPath = filepath.Join(parentDir, "bin")
-	f.logDirPath = filepath.Join(parentDir, "logs")
+	// f.confDirPath = filepath.Join(parentDir, "conf")
+	// f.binDirPath = filepath.Join(parentDir, "bin")
+	// f.logDirPath = filepath.Join(parentDir, "logs")
 
 	//os.Mkdir(f.confDirPath, 0755)
 
-	// f.confDirPath = filepath.Join(wd, "conf")
-	// f.binDirPath = filepath.Join(wd, "bin")
-	// f.logDirPath = filepath.Join(wd, "logs")
+	f.confDirPath = filepath.Join(wd, "conf")
+	f.binDirPath = filepath.Join(wd, "bin")
+	f.logDirPath = filepath.Join(wd, "logs")
 
 	for _, dir := range []string{f.confDirPath, f.logDirPath} {
 		if os.IsNotExist(err) {
