@@ -22,6 +22,7 @@ const (
 	// TestConfigDir is used for testing
 	TestConfigDir = "testdata"
 
+	// DefaultLogFile is the name of the log file
 	DefaultLogFile = "recmd-dmn.log"
 )
 
@@ -37,6 +38,7 @@ type App struct {
 	History        HistoryFile
 }
 
+// InitializeProd initializes the app in production
 func (a *App) InitializeProd() {
 
 	footprint := Footprint{}

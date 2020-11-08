@@ -7,12 +7,20 @@ import (
 	"time"
 )
 
+// CommandStatus indicates the status of the command
 type CommandStatus string
 
 const (
-	Idle      CommandStatus = "Idle"
-	Running   CommandStatus = "Running"
+	// Idle means that the command is not running
+	Idle CommandStatus = "Idle"
+
+	// Running means that the command is running
+	Running CommandStatus = "Running"
+
+	// Completed means that the command is done
 	Completed CommandStatus = "Completed"
+
+	// Scheduled means that the command will run
 	Scheduled CommandStatus = "Scheduled"
 )
 
