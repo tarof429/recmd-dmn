@@ -13,22 +13,27 @@ const (
 	recmdHistoryFile = "recmd_history.json"
 )
 
+// HistoryFile represents the file containing the history
 type HistoryFile struct {
 	Path string
 }
 
+// Set sets the path to the history file
 func (h *HistoryFile) Set(path string) {
 	h.Path = filepath.Join(path, recmdHistoryFile)
 }
 
+// Get returns the path to the history file
 func (h *HistoryFile) Get() string {
 	return h.Path
 }
 
+// Remove removes the history file
 func (h *HistoryFile) Remove() {
 	os.Remove(h.Path)
 }
 
+// Create creates the history file
 func (h *HistoryFile) Create() {
 	os.Create((h.Path))
 }

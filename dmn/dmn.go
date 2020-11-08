@@ -22,6 +22,7 @@ const (
 	// TestConfigDir is used for testing
 	TestConfigDir = "testdata"
 
+	// DefaultLogFile is the name of the log file
 	DefaultLogFile = "recmd-dmn.log"
 )
 
@@ -37,6 +38,7 @@ type App struct {
 	History        HistoryFile
 }
 
+// InitializeProd initializes the app in production
 func (a *App) InitializeProd() {
 
 	footprint := Footprint{}
@@ -168,6 +170,7 @@ func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", a.HandleRun)
 	a.Router.HandleFunc("/secret/{secret}/list", a.HandleList)
 	a.Router.HandleFunc("/secret/{secret}/queue", a.HandleQueue)
+	a.Router.HandleFunc("/secret/{secret}/status", a.HandleStatus)
 
 	http.Handle("/", a.Router)
 }

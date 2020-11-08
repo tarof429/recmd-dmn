@@ -13,6 +13,7 @@ type Footprint struct {
 	logDirPath  string
 }
 
+// Set sets some global variables associated with the footprint
 func (f *Footprint) Set(footprint *Footprint) {
 	f.confDirPath = footprint.confDirPath
 	f.binDirPath = footprint.binDirPath

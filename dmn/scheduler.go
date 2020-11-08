@@ -20,6 +20,7 @@ func (scheduler *Scheduler) CreateScheduler() {
 	scheduler.VacuumQueue = make(chan Command)
 }
 
+// QueuedCommandsCleanup removes completed commands from the array
 func (scheduler *Scheduler) QueuedCommandsCleanup() {
 	for selectedCmd := range scheduler.VacuumQueue {
 		for foundIndex, cmd := range scheduler.QueuedCommands {
