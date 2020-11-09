@@ -24,10 +24,10 @@ func TestRunHandler(t *testing.T) {
 		t.Errorf("Unable to save command")
 	}
 
-	app.RequestHandler.CommandScheduler.CreateScheduler()
+	app.CommandScheduler.CreateScheduler()
 
 	go func() {
-		app.RequestHandler.CommandScheduler.CommandQueue <- cmd
-		app.RequestHandler.CommandScheduler.RunSchedulerMock()
+		app.CommandScheduler.CommandQueue <- cmd
+		app.CommandScheduler.RunSchedulerMock()
 	}()
 }

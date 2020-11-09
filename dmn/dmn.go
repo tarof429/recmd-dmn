@@ -28,14 +28,14 @@ const (
 
 // App represents this API server
 type App struct {
-	ConfigPath     string
-	Router         *mux.Router
-	Server         http.Server
-	RequestHandler RequestHandler
-	Secret         Secret
-	Footprint      Footprint
-	DmnLogFile     LogFile
-	History        HistoryFile
+	ConfigPath       string
+	Router           *mux.Router
+	Server           http.Server
+	CommandScheduler Scheduler
+	Secret           Secret
+	Footprint        Footprint
+	DmnLogFile       LogFile
+	History          HistoryFile
 }
 
 // InitializeProd initializes the app in production
@@ -67,9 +67,9 @@ func (a *App) InitializeProd() {
 
 	a.InitializeRoutes()
 
-	a.RequestHandler.CommandScheduler.CreateScheduler()
-	go a.RequestHandler.CommandScheduler.RunScheduler()
-	go a.RequestHandler.CommandScheduler.QueuedCommandsCleanup()
+	a.CommandScheduler.CreateScheduler()
+	go a.CommandScheduler.RunScheduler()
+	go a.CommandScheduler.QueuedCommandsCleanup()
 }
 
 // InitalizeTest deletes and recreates the testdata sandbox directory for testing.
