@@ -43,7 +43,7 @@ func (a *App) HandleQueue(w http.ResponseWriter, r *http.Request) {
 // QueueCmd returns a list of queued commands
 func (a *App) QueueCmd() []Command {
 
-	cmds := a.RequestHandler.CommandScheduler.QueuedCommands
+	cmds := a.CommandScheduler.QueuedCommands
 
 	a.DmnLogFile.Log.Println("Total queued: " + strconv.Itoa(len(cmds)))
 

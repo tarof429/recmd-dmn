@@ -54,26 +54,27 @@ func (a *App) HandleRun(w http.ResponseWriter, r *http.Request) {
 
 	a.DmnLogFile.Log.Printf("Scheduling command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
 	selectedCmd.Status = Scheduled
-	a.RequestHandler.CommandScheduler.QueuedCommands = append(a.RequestHandler.CommandScheduler.QueuedCommands, selectedCmd)
-	a.RequestHandler.CommandScheduler.CommandQueue <- selectedCmd
+	a.CommandScheduler.QueuedCommands = append(a.CommandScheduler.QueuedCommands, selectedCmd)
+	a.CommandScheduler.CommandQueue <- selectedCmd
 
 	a.DmnLogFile.Log.Printf("Completed command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
 
-	completedCommand := <-a.RequestHandler.CommandScheduler.CompletedQueue
+	completedCommand := <-a.CommandScheduler.CompletedQueue
 
 	a.DmnLogFile.Log.Printf("Command received from CompletedQueue: %v: %v\n", completedCommand.CmdHash, selectedCmd.Status)
+
 	a.UpdateCommandDuration(selectedCmd, completedCommand.Duration)
 
-	for index, cmd := range a.RequestHandler.CommandScheduler.QueuedCommands {
+	for index, cmd := range a.CommandScheduler.QueuedCommands {
 		if cmd.CmdHash == selectedCmd.CmdHash {
-			a.DmnLogFile.Log.Printf("Updating command status%v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
-			a.RequestHandler.CommandScheduler.QueuedCommands[index].Status = Completed
-
-			a.DmnLogFile.Log.Printf("Vacuuming command %v: %v\n", selectedCmd.CmdHash, selectedCmd.Status)
-			a.RequestHandler.CommandScheduler.VacuumQueue <- selectedCmd
+			a.DmnLogFile.Log.Printf("Updating status for %v: %v\n", cmd.CmdHash, Completed)
+			a.CommandScheduler.QueuedCommands[index].Status = Completed
 			break
 		}
 	}
+
+	a.DmnLogFile.Log.Printf("Vacuuming command %v\n", selectedCmd.CmdHash)
+	a.CommandScheduler.VacuumQueue <- selectedCmd
 
 	out, _ := json.Marshal(completedCommand)
 	io.WriteString(w, string(out))
