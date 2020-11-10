@@ -67,9 +67,9 @@ func (a *App) InitializeProd() {
 
 	a.InitializeRoutes()
 
-	a.CommandScheduler.CreateScheduler()
-	go a.CommandScheduler.RunScheduler()
-	go a.CommandScheduler.QueuedCommandsCleanup()
+	a.CreateScheduler()
+	go a.RunScheduler()
+	go a.QueuedCommandsCleanup()
 }
 
 // InitalizeTest deletes and recreates the testdata sandbox directory for testing.

@@ -27,9 +27,9 @@ func TestMain(m *testing.M) {
 
 	a.InitializeRoutes()
 
-	a.CommandScheduler.CreateScheduler()
-	go a.CommandScheduler.RunScheduler()
-	go a.CommandScheduler.QueuedCommandsCleanup()
+	a.CreateScheduler()
+	go a.RunScheduler()
+	go a.QueuedCommandsCleanup()
 
 	code := m.Run()
 
