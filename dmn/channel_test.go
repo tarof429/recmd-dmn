@@ -1,7 +1,6 @@
 package dmn
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -18,7 +17,7 @@ func TestCount(t *testing.T) {
 	f := func(s string) {
 		total := 0
 		for _, c := range s {
-			fmt.Printf("Encountered %v\n", string(c))
+			//fmt.Printf("Encountered %v\n", string(c))
 			runningRunes = append(runningRunes, c)
 			total = total + 1
 		}
@@ -28,9 +27,12 @@ func TestCount(t *testing.T) {
 
 	count := <-wordCounter
 
-	fmt.Printf("Counted %v characters\n", count)
-
-	for _, c := range runningRunes {
-		fmt.Printf("Running rune: %v\n", string(c))
+	if count != 11 {
+		t.Errorf("11 characters not found")
 	}
+	// fmt.Printf("Counted %v characters\n", count)
+
+	// for _, c := range runningRunes {
+	// 	fmt.Printf("Running rune: %v\n", string(c))
+	// }
 }

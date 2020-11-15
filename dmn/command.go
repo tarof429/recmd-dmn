@@ -22,6 +22,9 @@ const (
 
 	// Scheduled means that the command will run
 	Scheduled CommandStatus = "Scheduled"
+
+	// Failed means that the command failed
+	Failed CommandStatus = "Failed"
 )
 
 // Command represents a command and optionally a description to document what the command does
