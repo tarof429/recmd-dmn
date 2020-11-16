@@ -1,6 +1,7 @@
 package dmn
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -19,18 +20,22 @@ func (a *App) CreateScheduler() {
 	a.CommandScheduler.VacuumQueue = make(chan Command)
 }
 
-// QueuedCommandsCleanup removes completed commands from the array
+// QueuedCommandsCleanup removes completed commands from the array.
+// Once it receives a command from the channel, it starts a goroutine
+// to make it a non-blocking operation.
 func (a *App) QueuedCommandsCleanup() {
 	for selectedCmd := range a.CommandScheduler.VacuumQueue {
-		time.Sleep(time.Second * 10)
-		a.DmnLogFile.Log.Printf("Vacuuming %v\n", selectedCmd.CmdHash)
-		for foundIndex, cmd := range a.CommandScheduler.QueuedCommands {
-			if cmd.CmdHash == selectedCmd.CmdHash {
-				//log.Printf("Vacuuming command: %v\n", cmd.CmdHash)
-				a.CommandScheduler.QueuedCommands = append(a.CommandScheduler.QueuedCommands[:foundIndex], a.CommandScheduler.QueuedCommands[foundIndex+1:]...)
-				break
+		go func() {
+			time.Sleep(time.Second * 3)
+			a.DmnLogFile.Log.Printf("Vacuuming %v\n", selectedCmd.CmdHash)
+			for foundIndex, cmd := range a.CommandScheduler.QueuedCommands {
+				if cmd.CmdHash == selectedCmd.CmdHash {
+					//log.Printf("Vacuuming command: %v\n", cmd.CmdHash)
+					a.CommandScheduler.QueuedCommands = append(a.CommandScheduler.QueuedCommands[:foundIndex], a.CommandScheduler.QueuedCommands[foundIndex+1:]...)
+					break
+				}
 			}
-		}
+		}()
 	}
 	a.DmnLogFile.Log.Printf("Total queued: %v\n", len(a.CommandScheduler.QueuedCommands))
 }
@@ -46,10 +51,12 @@ func (a *App) updateStatusForQueuedCommand(selectedCmd Command, status CommandSt
 }
 
 // RunSchedulerMock runs a mock schedule
-func (a *App) RunSchedulerMock() {
+func (a *App) RunSchedulerMock(expectedStatus CommandStatus) {
+
+	fmt.Println("In RunSchedulerMock")
 
 	for cmd := range a.CommandScheduler.CommandQueue {
-		a.DmnLogFile.Log.Printf("Scheduling command: %v\n", cmd.CmdHash)
+		fmt.Printf("Scheduling command: %v\n", cmd.CmdHash)
 
 		var sc ScheduledCommand
 		sc.CmdHash = cmd.CmdHash
@@ -59,13 +66,21 @@ func (a *App) RunSchedulerMock() {
 		a.updateStatusForQueuedCommand(cmd, Running)
 
 		sc.StartTime = time.Now()
-		time.Sleep(time.Second * 1) // Simulate command execution
+		sc.RunShellScriptCommandWithExpectedStatus(expectedStatus)
+		fmt.Printf("Completed running command")
+		//time.Sleep(time.Second * 1) // Simulate command execution
+
+		// Simulate working directory not present
+		// sc.WorkingDirectory
+
 		sc.EndTime = time.Now()
 		sc.Duration = sc.EndTime.Sub(sc.StartTime)
-		sc.Status = Completed
-		a.updateStatusForQueuedCommand(cmd, Completed)
+
+		//sc.Status = Completed
+		a.updateStatusForQueuedCommand(cmd, sc.Status)
 
 		a.DmnLogFile.Log.Printf("Command completed: %v\n", cmd.CmdHash)
+		fmt.Printf("Command completed: %v\n", cmd.CmdHash)
 
 		a.CommandScheduler.CompletedQueue <- sc
 	}
@@ -89,10 +104,10 @@ func (a *App) RunScheduler() {
 		sc.RunShellScriptCommandWithExitStatus()
 		sc.EndTime = time.Now()
 		sc.Duration = sc.EndTime.Sub(sc.StartTime)
-		sc.Status = Completed
-		a.updateStatusForQueuedCommand(cmd, Completed)
+		//sc.Status = Completed
+		a.updateStatusForQueuedCommand(cmd, sc.Status)
 
-		if sc.ExitStatus != 0 {
+		if sc.Status != Completed {
 			a.DmnLogFile.Log.Printf("Error: Command %v failed with exit status %v: %v\n", sc.CmdHash, sc.ExitStatus, sc.Coutput)
 		}
 

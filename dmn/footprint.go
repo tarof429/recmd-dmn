@@ -11,6 +11,7 @@ type Footprint struct {
 	confDirPath string
 	binDirPath  string
 	logDirPath  string
+	dataDirPath string
 }
 
 // Set sets some global variables associated with the footprint
@@ -18,6 +19,7 @@ func (f *Footprint) Set(footprint *Footprint) {
 	f.confDirPath = footprint.confDirPath
 	f.binDirPath = footprint.binDirPath
 	f.logDirPath = footprint.logDirPath
+	f.dataDirPath = footprint.dataDirPath
 }
 
 // TestFootprint creates a footprint for testing. All files will be put in a
@@ -45,6 +47,7 @@ func (f *Footprint) TestFootprint() {
 	f.confDirPath = testdataDir
 	f.binDirPath = testdataDir
 	f.logDirPath = testdataDir
+	f.dataDirPath = testdataDir
 }
 
 // DefaultFootprint creates a footprint for production. There are
@@ -62,8 +65,9 @@ func (f *Footprint) DefaultFootprint() {
 	f.confDirPath = filepath.Join(wd, "conf")
 	f.binDirPath = filepath.Join(wd, "bin")
 	f.logDirPath = filepath.Join(wd, "logs")
+	f.dataDirPath = filepath.Join(wd, "data")
 
-	for _, dir := range []string{f.confDirPath, f.logDirPath} {
+	for _, dir := range []string{f.confDirPath, f.dataDirPath, f.logDirPath} {
 		mode := int(0755)
 		os.Mkdir(dir, os.FileMode(mode))
 	}

@@ -33,6 +33,14 @@ func (a *App) HandleAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = os.Stat(variables.WorkingDirectory)
+	if os.IsNotExist(err) {
+		a.DmnLogFile.Log.Println("Invalid working directory")
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "Invalid working directory")
+		return
+	}
+
 	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
 	testCmd := new(Command)
 
@@ -54,6 +62,13 @@ func (a *App) HandleAdd(w http.ResponseWriter, r *http.Request) {
 
 // SaveCmd writes a dmn.Command to the history file
 func (a *App) SaveCmd(cmd Command) bool {
+
+	// Do some validation of the command
+	_, err := os.Stat(cmd.WorkingDirectory)
+	if os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "Invalid working directory\n")
+		return false
+	}
 
 	// Check if the file does not exist. If not, then create it and add our first dmn.Command to it.
 	f, err := os.Open(a.History.Path)

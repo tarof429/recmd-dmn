@@ -47,7 +47,7 @@ func TestScheduler(t *testing.T) {
 	}()
 
 	// Schedule the Commands. This will take Commands off of the CommandQueue, run them, and put the ScheduledCommands onto the CompletedQueue
-	go a.RunSchedulerMock()
+	go a.RunSchedulerMock(Completed)
 
 	// Add commands to the array of queued commands. This is used to track the state.
 	a.CommandScheduler.QueuedCommands = append(a.CommandScheduler.QueuedCommands, cmd1)

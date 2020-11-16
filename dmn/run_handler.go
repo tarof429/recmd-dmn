@@ -37,18 +37,33 @@ func (a *App) HandleRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	abortcmd := func(reason string) {
+		a.DmnLogFile.Log.Println(reason)
+
+		w.WriteHeader(http.StatusBadRequest)
+		var sc ScheduledCommand
+		sc.Status = Failed
+		sc.Coutput = reason
+		out, _ := json.Marshal(sc)
+		io.WriteString(w, string(out))
+	}
+
 	// Select the dmn.Command, otherwise, if the dmn.Command hash cannot be found, return error 400
 	selectedCmd, cerr := a.SelectCmd(variables.CmdHash)
 
 	if cerr != nil {
-		a.DmnLogFile.Log.Println("Unable to select Command")
-		w.WriteHeader(http.StatusBadRequest)
+		abortcmd("Unable to select hash: " + variables.CmdHash)
 		return
 	}
 
-	if selectedCmd.CmdHash == "" {
-		a.DmnLogFile.Log.Println("Invalid hash")
-		w.WriteHeader(http.StatusBadRequest)
+	// if selectedCmd.CmdHash == "" {
+	// 	abortcmd("Invalid hash")
+	// 	return
+	// }
+
+	_, err = os.Stat(selectedCmd.WorkingDirectory)
+	if os.IsNotExist(err) {
+		abortcmd("Invalid working directory: " + selectedCmd.WorkingDirectory)
 		return
 	}
 

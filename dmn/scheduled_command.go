@@ -25,6 +25,12 @@ func getCurrentWorkingDirectory() string {
 	}
 	return cwd
 }
+func (sc *ScheduledCommand) RunShellScriptCommandWithExpectedStatus(expectedStatus CommandStatus) {
+	fmt.Println("In RunShellScriptCommandWithExpectedStatus")
+	time.Sleep(time.Second)
+	sc.Status = expectedStatus
+	fmt.Println("Completed RunShellScriptCommandWithExpectedStatus")
+}
 
 // RunShellScriptCommandWithExitStatus runs a Command written to a temporary file
 func (sc *ScheduledCommand) RunShellScriptCommandWithExitStatus() int {
@@ -57,7 +63,10 @@ func (sc *ScheduledCommand) RunShellScriptCommandWithExitStatus() int {
 	// fmt.Fprintf(os.Stdout, "\nError: %s error 2: %v\n", string(combinedOutput), err2)
 
 	if combinedOutputErr != nil {
-		sc.ExitStatus = -1
+		//sc.ExitStatus = -1
+		sc.Status = Failed
+	} else {
+		sc.Status = Completed
 	}
 
 	sc.Coutput = string(combinedOutput)

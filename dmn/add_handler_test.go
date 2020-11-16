@@ -25,3 +25,24 @@ func TestAddHandler(t *testing.T) {
 	}
 
 }
+
+func TestSaveCmdWithBadWorkingDirectory(t *testing.T) {
+
+	var app App
+
+	err := app.InitalizeTest()
+
+	if err != nil {
+		t.Errorf("Error initializing test %v", err)
+	}
+
+	var cmd Command
+
+	cmd.Set("another-command", "another-command", "another-command")
+
+	ret := app.SaveCmd(cmd)
+
+	if ret != false {
+		t.Errorf("Saved command with bad working diectory")
+	}
+}
