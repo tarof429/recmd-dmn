@@ -4,9 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -481,4 +483,96 @@ func TestDeleteHandlerPartial(t *testing.T) {
 	if len(founddHashes) != 1 {
 		t.Errorf("Commands not deleted")
 	}
+}
+
+func TestShowHandler(t *testing.T) {
+
+	clearHistory()
+
+	createFile := func() {
+		pathToScript := filepath.Join("testdata", "test.sh")
+		ioutil.WriteFile(pathToScript, []byte("#!/bin/sh\n# My script\n"), os.FileMode(0644))
+	}
+
+	createFile()
+
+	add := func() {
+		// Add command
+		endpoint := "/secret/{secret}/add/command/{command}/description/{description}/workingDirectory/{workingDirectory}"
+
+		params := make(map[string]string)
+		params["{secret}"] = a.Secret.GetSecret()
+		params["{command}"] = "sh ./test.sh"
+		params["{description}"] = "Run test.sh"
+		params["{workingDirectory}"] = "testdata"
+
+		endpoint = makeEndpoint(endpoint, params)
+
+		req, _ := http.NewRequest("GET", endpoint, nil)
+
+		response := executeRequest(req)
+
+		checkResponseCode(t, http.StatusOK, response.Code)
+
+		var ret string
+
+		json.Unmarshal(response.Body.Bytes(), &ret)
+		if ret != "true" {
+			t.Errorf("Unable to save command")
+		}
+	}
+
+	add()
+
+	list := func() string {
+		// Use list command to get the Command with the hash we want
+		endpoint := "/secret/{secret}/list"
+		params := make(map[string]string)
+		params["{secret}"] = a.Secret.GetSecret()
+
+		endpoint = makeEndpoint(endpoint, params)
+
+		req, _ := http.NewRequest("GET", endpoint, nil)
+
+		response := executeRequest(req)
+
+		checkResponseCode(t, http.StatusOK, response.Code)
+
+		var cmds []dmn.Command
+		json.Unmarshal(response.Body.Bytes(), &cmds)
+
+		if len(cmds) != 1 {
+			t.Errorf("No commands found")
+		}
+
+		if cmds[0].CmdString != "sh ./test.sh" {
+			t.Errorf("Command string is invalid")
+		}
+
+		return cmds[0].CmdHash
+	}
+
+	expectedHash := list()
+
+	selectFunc := func(expectedHash string) {
+		endpoint := "/secret/{secret}/show/cmdHash/{cmdHash}"
+		params := make(map[string]string)
+		params["{secret}"] = a.Secret.GetSecret()
+		params["{cmdHash}"] = expectedHash
+
+		endpoint = makeEndpoint(endpoint, params)
+
+		req, _ := http.NewRequest("GET", endpoint, nil)
+
+		response := executeRequest(req)
+
+		checkResponseCode(t, http.StatusOK, response.Code)
+
+		var ret string
+		json.Unmarshal(response.Body.Bytes(), &ret)
+
+		fmt.Println(ret)
+	}
+
+	selectFunc(expectedHash)
 }
