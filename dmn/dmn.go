@@ -168,6 +168,7 @@ func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/secret/{secret}/select/cmdHash/{cmdHash}", a.HandleSelect)
 	a.Router.HandleFunc("/secret/{secret}/search/description/{description}", a.HandleSearch)
 	a.Router.HandleFunc("/secret/{secret}/run/cmdHash/{cmdHash}", a.HandleRun)
+	a.Router.HandleFunc("/secret/{secret}/show/cmdHash/{cmdHash}", a.HandleShow)
 	a.Router.HandleFunc("/secret/{secret}/list", a.HandleList)
 	a.Router.HandleFunc("/secret/{secret}/queue", a.HandleQueue)
 	a.Router.HandleFunc("/secret/{secret}/status", a.HandleStatus)
